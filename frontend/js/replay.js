@@ -59,7 +59,13 @@ try {
     }
   }
 
+  function updateButtons() {
+  document.getElementById("precedent").disabled = (currentMove === 0);
+  document.getElementById("suivant").disabled = (currentMove === moves.length);
+  }
+
   renderGrid();
+  updateButtons();
 
   document.getElementById("precedent").addEventListener("click", () => {
     if (currentMove > 0) {
@@ -75,6 +81,7 @@ try {
       }
 
       renderGrid();   // Affiche la grille mise à jour
+      updateButtons();
     }
   });
 
@@ -86,6 +93,7 @@ try {
       applyMove(col, player);
       currentMove++;
       renderGrid();
+      updateButtons();
       
       if (currentMove === moves.length) {
         setTimeout(() => alert("Partie terminée !"), 1000);

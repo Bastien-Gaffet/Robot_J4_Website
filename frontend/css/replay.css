@@ -1,3 +1,13 @@
+body {
+  padding: 2rem;
+  padding-top: 58px;
+  display: flex;
+  justify-content: center; /* centre horizontalement */
+  align-items: center;     /* centre verticalement */
+  min-height: 100vh;       /* hauteur minimale = hauteur fenêtre */
+  margin: 0;
+  flex-direction: column; /* pour garder la structure verticale */
+}
 
 table {
   width: 100%;
@@ -15,7 +25,7 @@ th, td {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  margin: 20px;
+  margin: 20px 0;
 }
 
 .row {
@@ -37,4 +47,39 @@ th, td {
 
 .cell.yellow {
   background: yellow;
+}
+
+button#precedent,
+button#suivant {
+  background-color: #004080;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  margin: 10px 10px 10px 0; /* espacement entre boutons */
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+button#precedent:hover,
+button#suivant:hover {
+  background-color: #0066cc;
+}
+
+button#precedent:disabled,
+button#suivant:disabled {
+  background-color: #999999;
+  cursor: not-allowed;
+  box-shadow: none;
+  color: #eee;
+}
+
+#controls {
+  display: flex;
+  gap: 10px; /* espace entre les boutons */
+  justify-content: center; /* centre horizontalement */
+  margin-top: 10px;
 }

@@ -13,18 +13,16 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(to right, #f7f9fc, #e4ecf5);
   color: #333;
-  padding-top: 48px;
+  padding-top: 58px;
 }
 
 .navbar {
   background-color: #004080;
-  height: 48px;
-  padding: 4px 20px;
+  padding: 8px 20px;
   position: fixed;
   width: 100%;
   top: 0;
   left: 0;
-  bottom: 0;
   z-index: 1000;
   transition: transform 0.3s ease;
    box-sizing: border-box;
@@ -41,6 +39,8 @@ body {
   border-radius: 50%;
   margin-right: 20px;
   object-fit: contain;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .nav-links {
@@ -70,10 +70,12 @@ body {
 
 /* Bouton retour en haut */
 #backtotopBtn {
+  opacity: 0;
+  pointer-events: none; /* empêche le clic quand invisible */
+  transition: opacity 0.4s ease;
   position: fixed;
   bottom: 30px;
   right: 30px;
-  display: none;
   background-color: #004080;
   color: white;
   padding: 10px 16px;
@@ -85,5 +87,14 @@ body {
 }
 
 #backtotopBtn.show {
-  display: block;
+  opacity: 1;
+  pointer-events: auto; /* activé quand visible */
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  font-size: 0.95em;
+  color: #777;
+  padding: 20px;
 }

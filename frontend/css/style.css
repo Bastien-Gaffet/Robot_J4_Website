@@ -110,15 +110,6 @@ h2 {
   color: #333;
 }
 
-/* Footer */
-footer {
-  text-align: center;
-  margin-top: 40px;
-  font-size: 0.95em;
-  color: #777;
-  padding: 20px;
-}
-
 /* Animation for images */
 @keyframes fadeInUp {
   to {
