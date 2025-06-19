@@ -7,16 +7,22 @@ body {
   min-height: 100vh;       /* hauteur minimale = hauteur fenêtre */
   margin: 0;
   flex-direction: column; /* pour garder la structure verticale */
+  overflow-x: hidden;
 }
 
 table {
   width: 100%;
+  min-width: 600px; /* ou plus selon ton contenu */
   border-collapse: collapse;
   margin-top: 1rem;
 }
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
 
 th, td {
-  border: 1px solid #ccc;
+  border: 2px solid #333;
   padding: 0.5rem;
   text-align: center;
 }
@@ -24,19 +30,19 @@ th, td {
 #grid {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
   margin: 20px 0;
 }
 
 .row {
   display: flex;
-  gap: 5px;
+  gap: 6px;
 }
 
 .cell {
-  width: 40px;
-  height: 40px;
-  border: 1px solid #ccc;
+  width: min(max(40px, 8vw), 80px);
+  height: min(max(40px, 8vw), 80px);
+  border: 2px solid #333;
   border-radius: 50%;
   background: white;
 }
@@ -82,4 +88,11 @@ button#suivant:disabled {
   gap: 10px; /* espace entre les boutons */
   justify-content: center; /* centre horizontalement */
   margin-top: 10px;
+}
+
+.grid-message {
+  color: red;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-align: center;
 }

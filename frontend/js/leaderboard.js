@@ -20,14 +20,23 @@ async function loadLeaderboard() {
       const duration = data.duration_seconds || 0;
 
       const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${data.player_pseudo || 'Anonyme'}</td>
-        <td>${date.toLocaleString()}</td>
-        <td>${duration.toFixed(1)}s</td>
-        <td>${data.ai_depth || 'N/A'}</td>
-        <td>${data.winner || 'N/A'}</td>
-        <td><a href="replay.html?game_id=${data.game_id}">Rejouer</a></td>
-      `;
+
+      const fields = [
+        { label: "Pseudo", value: data.player_pseudo || "Anonyme" },
+        { label: "Date", value: date.toLocaleString() },
+        { label: "Durée", value: `${duration.toFixed(1)}s` },
+        { label: "IA", value: data.ai_depth || "N/A" },
+        { label: "Gagnant", value: data.winner || "N/A" },
+        { label: "Replay", value: `<a href="replay.html?game_id=${data.game_id}">Rejouer</a>` }
+      ];
+
+      fields.forEach((field) => {
+        const td = document.createElement("td");
+        td.setAttribute("data-label", field.label);
+        td.innerHTML = field.value;
+        row.appendChild(td);
+      });
+
       tbody.appendChild(row);
     });
   } catch (error) {
