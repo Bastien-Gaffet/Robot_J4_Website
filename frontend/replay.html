@@ -1,11 +1,28 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Visualisation Partie</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Replay game</title>
+  <link rel="stylesheet" href="css/global.css" />
   <link rel="stylesheet" href="css/replay.css">
+  <script src="js/global.js"></script>
 </head>
 <body>
+  <!-- Common navigation bar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <img src="images/logo.png" alt="Logo" height="40" />
+      </div>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="leaderboard.html">Leaderboard</a>
+        <a href="replay.html" class="active">Replay</a>
+      </div>
+    </div>
+  </nav>
+
   <h1>Visualisation de la partie</h1>
   <div id="grid">Grille ici...</div>
   <button id="precedent">Précédent</button>
