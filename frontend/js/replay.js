@@ -79,23 +79,67 @@ async function main() {
       }
     }
 
+    function highlightWinningCells() {
+      const directions = [
+        { dr: 0, dc: 1 },   // Horizontal
+        { dr: 1, dc: 0 },   // Vertical
+        { dr: 1, dc: 1 },   // Diagonale /
+        { dr: 1, dc: -1 }   // Diagonale \
+      ];
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const player = grid[r][c];
+          if (player === 0) continue;
+
+          for (const { dr, dc } of directions) {
+            const cells = [];
+            for (let i = 0; i < 4; i++) {
+              const nr = r + dr * i;
+              const nc = c + dc * i;
+              if (
+                nr >= 0 && nr < rows &&
+                nc >= 0 && nc < cols &&
+                grid[nr][nc] === player
+              ) {
+                cells.push([nr, nc]);
+              } else {
+                break;
+              }
+            }
+
+            if (cells.length === 4) {
+              setTimeout(() => {
+                for (const [rr, cc] of cells) {
+                  const cell = document.querySelector(`#grid .row:nth-child(${rr + 1}) .cell:nth-child(${cc + 1})`);
+                  if (cell) cell.classList.add("winning-cell");
+                }
+              }, 200); // Délai de 200ms avant d'ajouter la classe
+              return; // Stop après le premier alignement trouvé
+            }
+          }
+        }
+      }
+    }
+
     function getWinnerText() {
       const winnerColor = (currentMove % 2 === 0 ? firstPlayer : (firstPlayer === 1 ? 2 : 1));
-      return winnerColor === 1 ? "Yellow" : "Red";
+      return winnerColor === 1 ? "Yellow (Player)" : "Red (AI)";
     }
 
     function showPopup(message) {
       const popup = document.getElementById("popup");
       const popupMessage = document.getElementById("popup-message");
-      
-      popup.classList.remove("hidden");
 
-      // Force animation redémarrage
-      const popupContent = popup.querySelector(".popup-content");
-      popupContent.style.animation = "none";
-      void popupContent.offsetWidth; // ← trigger reflow
-      popupContent.style.animation = "";
-      popupMessage.textContent = message;
+      setTimeout(() => {
+        popup.classList.remove("hidden");
+        popupMessage.textContent = message;
+
+        // Redémarre l’animation
+        popupContent.style.animation = "none";
+        void popupContent.offsetWidth;
+        popupContent.style.animation = "";
+      }, 1800); // ← délai en ms
     }
 
     function updateButtons() {
@@ -132,6 +176,7 @@ async function main() {
               playPauseImg.src = "images/svg/play.svg";
               playPauseImg.alt = "Play";
               showPopup(getWinnerText() + " wins!");
+              highlightWinningCells();
             }
           }
         }, 500);
@@ -182,6 +227,7 @@ async function main() {
           playPauseImg.src = "images/svg/play.svg";
           playPauseImg.alt = "Play";
           showPopup(getWinnerText() + " wins!");
+          highlightWinningCells();
         }
       }
     });
@@ -212,6 +258,7 @@ async function main() {
       renderGrid();
       updateButtons();
       showPopup(getWinnerText() + " wins!");
+      highlightWinningCells();
     });
 
     document.getElementById("popup-close").addEventListener("click", () => {

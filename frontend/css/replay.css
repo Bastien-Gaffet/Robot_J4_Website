@@ -172,3 +172,14 @@ button#playpause:disabled {
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+.winning-cell {
+  box-shadow: 0 0 10px 5px orange;
+  animation: pulse 0.25s ease-in-out 0.2s 4;
+}
+
+@keyframes pulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
