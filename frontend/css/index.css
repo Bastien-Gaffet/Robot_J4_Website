@@ -164,6 +164,7 @@ h2 {
   display: flex;
   width: max-content;
   animation: scroll-carousel 60s linear infinite;
+  transition: transform 0.2s ease;
 }
 
 .carousel-item {
@@ -174,6 +175,7 @@ h2 {
   flex-direction: column;
   align-items: center;
   margin-right: 20px;
+  transition: transform 0.3s ease;
 }
 
 .carousel-item img {
@@ -190,6 +192,16 @@ h2 {
   font-size: 0.95em;
   color: #444;
   padding: 0 5px;
+}
+
+.carousel-container:hover .carousel-track {
+  animation-play-state: paused;
+}
+
+.carousel-item:hover {
+  transform: scale(1.1);
+  transition: transform 0.3s ease;
+  z-index: 1;
 }
 
 @keyframes scroll-carousel {

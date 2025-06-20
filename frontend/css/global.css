@@ -87,10 +87,21 @@ body {
   pointer-events: auto; /* activé quand visible */
 }
 
+.wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+}
+
 /* Footer */
 footer {
   text-align: center;
   font-size: 0.95em;
   color: #777;
   padding: 20px;
+  background-color: #f9f9f9;
 }

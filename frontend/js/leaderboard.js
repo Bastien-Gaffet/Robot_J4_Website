@@ -27,7 +27,7 @@ async function loadLeaderboard() {
         { label: "Durée", value: `${duration.toFixed(1)}s` },
         { label: "IA", value: data.ai_depth || "N/A" },
         { label: "Gagnant", value: data.winner || "N/A" },
-        { label: "Replay", value: `<a href="replay.html?game_id=${data.game_id}">Rejouer</a>` }
+        { label: "Replay", value: `<a href="replay.html?game_id=${data.game_id}">Replay</a>` }
       ];
 
       fields.forEach((field) => {

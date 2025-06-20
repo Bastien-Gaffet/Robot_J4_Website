@@ -55,28 +55,15 @@ th, td {
   background: yellow;
 }
 
-button#precedent,
-button#suivant {
-  background-color: #004080;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
-  font-weight: bold;
-  font-size: 16px;
-  cursor: pointer;
-  margin: 10px 10px 10px 0; /* espacement entre boutons */
-  transition: background-color 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
-
 button#precedent:hover,
-button#suivant:hover {
+button#suivant:hover,
+button#playpause:hover {
   background-color: #0066cc;
 }
 
 button#precedent:disabled,
-button#suivant:disabled {
+button#suivant:disabled,
+button#playpause:disabled {
   background-color: #999999;
   cursor: not-allowed;
   box-shadow: none;
@@ -85,9 +72,41 @@ button#suivant:disabled {
 
 #controls {
   display: flex;
-  gap: 10px; /* espace entre les boutons */
-  justify-content: center; /* centre horizontalement */
+  gap: 10px;
+  justify-content: center;
   margin-top: 10px;
+}
+
+#controls button {
+  background-color: #004080;
+  border: none;
+  border-radius: 8px;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#controls button:hover {
+  background-color: #0066cc;
+}
+
+#controls button:disabled {
+  background-color: #999999;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+#controls button img {
+  width: 60%;
+  height: 60%;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .grid-message {
@@ -95,4 +114,61 @@ button#suivant:disabled {
   font-weight: bold;
   margin-bottom: 1rem;
   text-align: center;
+}
+
+/* Popup styling */
+#popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.popup-content {
+  background: white;
+  padding: 30px 40px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.popup-content p {
+  
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+
+.popup-content {
+  animation: popup-fade 0.4s ease forwards;
+  transform: scale(0.9);
+  opacity: 0;
+}
+
+#popup-close {
+  background-color: #004080;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+#popup-close:hover {
+  background-color: #0066cc;
+}
+
+.hidden {
+  display: none !important;
+}
+
+@keyframes popup-fade {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }

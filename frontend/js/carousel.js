@@ -3,17 +3,27 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!track) return;
 
   let scrollAmount = 0;
+  let isPaused = false;
 
   // Dupliquer les éléments une fois
   track.innerHTML += track.innerHTML;
 
-  function scrollCarousel() {
-    scrollAmount += 1;
-    track.style.transform = `translateX(-${scrollAmount}px)`;
+  track.addEventListener("mouseenter", () => {
+    isPaused = true;
+  });
 
-    // Si on a scrollé autant que la moitié (donc une fois les items d'origine), on repart à 0
-    if (scrollAmount >= track.scrollWidth / 2) {
-      scrollAmount = 0;
+  track.addEventListener("mouseleave", () => {
+    isPaused = false;
+  });
+
+  function scrollCarousel() {
+    if (!isPaused) {
+      scrollAmount += 0.5; // plus fluide si < 1
+      track.style.transform = `translateX(-${scrollAmount}px)`;
+
+      if (scrollAmount >= track.scrollWidth / 2) {
+        scrollAmount = 0;
+      }
     }
 
     requestAnimationFrame(scrollCarousel);

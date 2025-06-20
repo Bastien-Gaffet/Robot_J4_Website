@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Replay game</title>
+  <link rel="icon" href="images/logo.png" type="image/png">
   <link rel="stylesheet" href="css/global.css" />
   <link rel="stylesheet" href="css/replay.css">
 </head>
@@ -23,10 +24,32 @@
   </nav>
 
   <h1>Game Replay Visualization</h1>
-  <div id="grid">Grille ici...</div>
+  <div id="grid"></div>
+
   <div id="controls">
-    <button id="precedent">Précédent</button>
-    <button id="suivant">Suivant</button>
+    <button id="rewind" aria-label="Rewind">
+      <img src="images/svg/arrow-left-double.svg" alt="Rewind">
+    </button>
+    <button id="previous" aria-label="Previous">
+      <img src="images/svg/arrow-left.svg" alt="Previous">
+    </button>
+    <button id="playpause" aria-label="Play/Pause">
+      <img id="playpause-img" src="images/svg/play.svg" alt="Play">
+    </button>
+    <button id="next" aria-label="Next">
+      <img src="images/svg/arrow-right.svg" alt="Next">
+    </button>
+    <button id="end" aria-label="End">
+      <img src="images/svg/arrow-right-double.svg" alt="End">
+    </button>
+  </div>
+
+  <!-- Popup personnalisé -->
+  <div id="popup" class="hidden">
+    <div class="popup-content">
+      <p id="popup-message">Player Red (AI) wins!</p>
+      <button id="popup-close">OK</button>
+    </div>
   </div>
 
   <script type="module" src="js/replay.js"></script>
@@ -34,5 +57,9 @@
   <!-- Back to Top Button -->
   <button id="backtotopBtn" title="Back to top">↑</button>
   <script src="js/global.js"></script>
+  <!-- Footer -->
+  <footer>
+    <p>Presented by the Lycée Vaucanson Robot J4 Team<br>from Tours in 2025</p>
+  </footer>
 </body>
 </html>

@@ -12,13 +12,13 @@ h1 {
 table {
   width: 100%;
   border-collapse: collapse;
-  background-color: white;
+  background-color: #fff;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
 th {
   background-color: #007BFF;
-  color: white;
+  color: #fff;
   padding: 0.75rem;
   text-transform: uppercase;
   font-size: 0.9rem;
@@ -26,16 +26,16 @@ th {
 
 td {
   padding: 0.75rem;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid #dbdbdb;
   text-align: center;
 }
 
 tr:nth-child(even) {
-  background-color: #f9f9f9;
+  background-color: #e4e4e4;
 }
 
 tr:hover {
-  background-color: #f1f1f1;
+  background-color: #d2dee0;
 }
 
 @media (max-width: 768px) {
