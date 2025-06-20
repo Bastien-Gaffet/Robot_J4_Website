@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Autonomous Connect 4 Robot Arm</title>
   <link rel="stylesheet" href="css/global.css" />
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/index.css" />
 </head>
 <body>
   <!-- Common navigation bar -->
@@ -52,11 +52,12 @@
   <section class="video-demo">
     <h2>Watch Our Demonstration Video</h2>
     <div class="video-container">
-      <iframe width="560" height="315" 
-      src="https://www.youtube-nocookie.com/embed/uffj-6rPMyQ?si=vq28fZdZMkygi2jZ" 
-      title="YouTube video player" frameborder="0" 
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-      referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      <iframe
+        src="https://www.youtube-nocookie.com/embed/uffj-6rPMyQ?si=vq28fZdZMkygi2jZ" 
+        title="YouTube video player" frameborder="0" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+      </iframe>
     </div>
   </section>
 
@@ -198,26 +199,5 @@
     <p>Presented by Jacques de Vaucanson High School<br>from Tours in 2025</p>
   </footer>
 </body>
-<script>
-  const track = document.getElementById("carousel-track");
-  let scrollAmount = 0;
-
-  // Dupliquer les éléments une fois
-  track.innerHTML += track.innerHTML;
-
-  function scrollCarousel() {
-    scrollAmount += 1;
-    track.style.transform = `translateX(-${scrollAmount}px)`;
-
-    // Si on a scrollé autant que la moitié (donc une fois les items d'origine), on repart à 0
-    if (scrollAmount >= track.scrollWidth / 2) {
-      scrollAmount = 0;
-    }
-
-    requestAnimationFrame(scrollCarousel);
-  }
-
-  requestAnimationFrame(scrollCarousel);
-</script>
-
+<script src="js/carousel.js"></script>
 </html>
