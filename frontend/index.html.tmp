@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Accueil - Puissance 4</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <h1>Bienvenue sur Puissance 4</h1>
+  <nav>
+    <a href="leaderboard.html">Voir le leaderboard</a>
+    <a href="replay.html">Visualiser une partie</a>
+  </nav>
+</body>
+</html>
