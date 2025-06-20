@@ -5,9 +5,87 @@ import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase
 const rows = 6, cols = 7;
 const grid = Array.from({ length: rows }, () => Array(cols).fill(0));
 
+const audioContext = new AudioContext();
+let buffers = [];
+let victoryBuffer = null;
+let secretVictoryBuffer = null;
+let defeatBuffer = null;
+
+async function loadSounds() {
+  const jetonFiles = ["sounds/jeton1.mp3", "sounds/jeton2.mp3"];
+  
+  // Charger les sons de jetons
+  buffers = await Promise.all(
+    jetonFiles.map(async (url) => {
+      const response = await fetch(url);
+      const arrayBuffer = await response.arrayBuffer();
+      return await audioContext.decodeAudioData(arrayBuffer);
+    })
+  );
+
+  // Charger le son de victoire
+  const victoryResponse = await fetch("sounds/victory.mp3");
+  const victoryArrayBuffer = await victoryResponse.arrayBuffer();
+  victoryBuffer = await audioContext.decodeAudioData(victoryArrayBuffer);
+
+  // Charger le son spécial (easter egg)
+  const secretResponse = await fetch("sounds/secret-victory.mp3");
+  const secretArrayBuffer = await secretResponse.arrayBuffer();
+  secretVictoryBuffer = await audioContext.decodeAudioData(secretArrayBuffer);
+  // Son de défaite
+  const defeatResponse = await fetch("sounds/defeat.mp3");
+  const defeatArrayBuffer = await defeatResponse.arrayBuffer();
+  defeatBuffer = await audioContext.decodeAudioData(defeatArrayBuffer);
+}
+
+function playRandomCoinSound() {
+  if (buffers.length === 0) return;
+
+  const buffer = buffers[Math.floor(Math.random() * buffers.length)];
+  const source = audioContext.createBufferSource();
+  source.buffer = buffer;
+
+  // Pitch aléatoire entre 0.95 et 1.05 (±5 %)
+  source.playbackRate.value = 0.95 + Math.random() * 0.1;
+
+  // Connexion au haut-parleur
+  source.connect(audioContext.destination);
+  source.start();
+}
+
+function playEndSound(isPlayerWinner) {
+  let bufferToPlay = null;
+
+  if (isPlayerWinner) {
+    // 1 chance sur 100 : son spécial
+    if (secretVictoryBuffer && Math.random() < 0.01) {
+      bufferToPlay = secretVictoryBuffer;
+      console.log("🎉 Easter egg !");
+    } else {
+      bufferToPlay = victoryBuffer;
+    }
+  } else {
+    bufferToPlay = defeatBuffer;
+  }
+
+  if (bufferToPlay) {
+    const source = audioContext.createBufferSource();
+    source.buffer = bufferToPlay;
+    source.playbackRate.value = 1;
+    source.connect(audioContext.destination);
+    source.start();
+  }
+}
+
 async function main() {
   const gridDiv = document.getElementById("grid");
   const playPauseImg = document.getElementById("playpause-img");
+  document.body.addEventListener("click", () => {
+  if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+  }, { once: true });
+  await loadSounds();
   function renderGrid() {
     gridDiv.innerHTML = "";
     for (let r = 0; r < rows; r++) {
@@ -35,25 +113,32 @@ async function main() {
   const urlParams = new URLSearchParams(window.location.search);
   const gameId = urlParams.get("game_id");
 
+  function showGridMessage(text) {
+  const gridMessage = document.getElementById("grid-message");
+  gridMessage.textContent = text;
+  gridMessage.classList.remove("hidden");
+  }
+
+  function hideGridMessage() {
+    const gridMessage = document.getElementById("grid-message");
+    gridMessage.classList.add("hidden");
+  }
+
   if (!gameId) {
-    const message = document.createElement("p");
-    message.textContent = "Aucune partie spécifiée.";
-    message.classList.add("grid-message");
-    gridDiv.parentNode.insertBefore(message, gridDiv);
+    showGridMessage("No game specified.");
     renderGrid();
     disableControls();
-    throw new Error("game_id manquant dans l'URL");
+    throw new Error("game_id missing in URL");
   }
 
   try {
     const gameDoc = await getDoc(doc(db, "games", gameId));
     if (!gameDoc.exists()) {
-      const message = document.createElement("p");
-      message.textContent = "Partie introuvable.";
-      message.classList.add("grid-message");
-      gridDiv.parentNode.insertBefore(message, gridDiv);
-      throw new Error("Document introuvable");
+      showGridMessage("Game not found.");
+      throw new Error("Files not found in Firestore");
     }
+
+    hideGridMessage();
 
     const data = gameDoc.data();
     const firstPlayer = data.first_player || 1;
@@ -124,7 +209,7 @@ async function main() {
 
     function getWinnerText() {
       const winnerColor = (currentMove % 2 === 0 ? firstPlayer : (firstPlayer === 1 ? 2 : 1));
-      return winnerColor === 1 ? "Yellow (Player)" : "Red (AI)";
+      return winnerColor === 1 ? "Yellow (Player)" : "Red (Algorithm)";
     }
 
     function showPopup(message) {
@@ -132,13 +217,13 @@ async function main() {
       const popupMessage = document.getElementById("popup-message");
 
       setTimeout(() => {
+        const isPlayerWinner = ((currentMove - 1) % 2 === 0) === (firstPlayer === 2);
+        playEndSound(isPlayerWinner);
+      }, 200);
+
+      setTimeout(() => {
         popup.classList.remove("hidden");
         popupMessage.textContent = message;
-
-        // Redémarre l’animation
-        popupContent.style.animation = "none";
-        void popupContent.offsetWidth;
-        popupContent.style.animation = "";
       }, 1800); // ← délai en ms
     }
 
@@ -167,6 +252,7 @@ async function main() {
             const player = (currentMove % 2 === 0) ? firstPlayer : (firstPlayer === 1 ? 2 : 1);
             applyMove(col, player);
             currentMove++;
+            playRandomCoinSound();
             renderGrid();
             updateButtons();
 
@@ -179,7 +265,7 @@ async function main() {
               highlightWinningCells();
             }
           }
-        }, 500);
+        }, 700);
       }
     }
 
@@ -218,6 +304,7 @@ async function main() {
         const player = (currentMove % 2 === 0) ? firstPlayer : (firstPlayer === 1 ? 2 : 1);
         applyMove(col, player);
         currentMove++;
+        playRandomCoinSound();
         renderGrid();
         updateButtons();
 
