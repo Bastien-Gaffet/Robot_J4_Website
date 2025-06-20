@@ -4,6 +4,10 @@ import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase
 
 const rows = 6, cols = 7;
 const grid = Array.from({ length: rows }, () => Array(cols).fill(0));
+let lastMove = null;
+let shouldAnimate = false;
+let winningCells = [];
+let endReached = false;
 
 const audioContext = new AudioContext();
 let buffers = [];
@@ -86,21 +90,47 @@ async function main() {
     }
   }, { once: true });
   await loadSounds();
+
   function renderGrid() {
     gridDiv.innerHTML = "";
     for (let r = 0; r < rows; r++) {
       const rowDiv = document.createElement("div");
       rowDiv.classList.add("row");
+
       for (let c = 0; c < cols; c++) {
         const cell = document.createElement("div");
         cell.classList.add("cell");
+
+        // Ajout des couleurs de joueur
         if (grid[r][c] === 1) cell.classList.add("red");
         if (grid[r][c] === 2) cell.classList.add("yellow");
+
+        // Vérifie si la cellule fait partie des gagnantes
+        const isWinningCell = winningCells.some(
+          ([wr, wc]) => wr === r && wc === c
+        );
+
+        if (isWinningCell) {
+          cell.classList.add("winning-cell");
+        }
+
+        // Ajoute l'animation de chute si c'est le dernier coup et pas une cellule gagnante
+        if (
+          lastMove &&
+          lastMove[0] === r &&
+          lastMove[1] === c &&
+          !isWinningCell
+        ) {
+          cell.classList.add("last-move");
+        }
+
         rowDiv.appendChild(cell);
       }
+
       gridDiv.appendChild(rowDiv);
     }
   }
+
 
   function disableControls() {
     document.getElementById("previous").disabled = true;
@@ -151,6 +181,11 @@ async function main() {
       for (let r = rows - 1; r >= 0; r--) {
         if (grid[r][colIndex] === 0) {
           grid[r][colIndex] = player;
+          if (shouldAnimate) {
+            lastMove = [r, colIndex]; // Pour animation si demandé
+          } else {
+            lastMove = null; // Pas d’animation si on recule
+          }
           break;
         }
       }
@@ -162,9 +197,14 @@ async function main() {
           grid[r][c] = 0;
         }
       }
+      winningCells = [];
+      endReached = false;
+      lastMove = null;
     }
 
     function highlightWinningCells() {
+      if (endReached) return;
+
       const directions = [
         { dr: 0, dc: 1 },   // Horizontal
         { dr: 1, dc: 0 },   // Vertical
@@ -194,13 +234,10 @@ async function main() {
             }
 
             if (cells.length === 4) {
-              setTimeout(() => {
-                for (const [rr, cc] of cells) {
-                  const cell = document.querySelector(`#grid .row:nth-child(${rr + 1}) .cell:nth-child(${cc + 1})`);
-                  if (cell) cell.classList.add("winning-cell");
-                }
-              }, 200); // Délai de 200ms avant d'ajouter la classe
-              return; // Stop après le premier alignement trouvé
+              winningCells = cells;
+              endReached = true; // ✅ On marque la fin
+              setTimeout(renderGrid, 200);
+              return;
             }
           }
         }
@@ -250,6 +287,7 @@ async function main() {
           if (currentMove < moves.length) {
             const col = moves[currentMove] - 1;
             const player = (currentMove % 2 === 0) ? firstPlayer : (firstPlayer === 1 ? 2 : 1);
+            shouldAnimate = true;
             applyMove(col, player);
             currentMove++;
             playRandomCoinSound();
@@ -287,6 +325,7 @@ async function main() {
         for (let i = 0; i < currentMove; i++) {
           const col = moves[i] - 1;
           const player = (i % 2 === 0) ? firstPlayer : (firstPlayer === 1 ? 2 : 1);
+          shouldAnimate = false;
           applyMove(col, player);
         }
         renderGrid();
@@ -302,6 +341,7 @@ async function main() {
         playPauseImg.alt = "Play";
         const col = moves[currentMove] - 1;
         const player = (currentMove % 2 === 0) ? firstPlayer : (firstPlayer === 1 ? 2 : 1);
+        shouldAnimate = true;
         applyMove(col, player);
         currentMove++;
         playRandomCoinSound();
@@ -335,6 +375,7 @@ async function main() {
       for (let i = 0; i < moves.length; i++) {
         const col = moves[i] - 1;
         const player = (i % 2 === 0) ? firstPlayer : (firstPlayer === 1 ? 2 : 1);
+        shouldAnimate = true;
         applyMove(col, player);
       }
       currentMove = moves.length;

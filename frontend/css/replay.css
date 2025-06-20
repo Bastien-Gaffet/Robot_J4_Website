@@ -254,3 +254,18 @@ button#playpause:disabled {
     align-items: center;
   }
 }
+
+.last-move {
+  animation: drop-in 0.25s ease-out;
+}
+
+@keyframes drop-in {
+  0% {
+    transform: translateY(-150px);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
