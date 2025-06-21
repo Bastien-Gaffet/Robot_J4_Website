@@ -4,25 +4,135 @@ import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase
 
 const rows = 6, cols = 7;
 const grid = Array.from({ length: rows }, () => Array(cols).fill(0));
+let lastMove = null;
+let shouldAnimate = false;
+let winningCells = [];
+let endReached = false;
+
+const audioContext = new AudioContext();
+let buffers = [];
+let victoryBuffer = null;
+let secretVictoryBuffer = null;
+let defeatBuffer = null;
+
+async function loadSounds() {
+  const jetonFiles = ["sounds/jeton1.mp3", "sounds/jeton2.mp3"];
+  
+  // Charger les sons de jetons
+  buffers = await Promise.all(
+    jetonFiles.map(async (url) => {
+      const response = await fetch(url);
+      const arrayBuffer = await response.arrayBuffer();
+      return await audioContext.decodeAudioData(arrayBuffer);
+    })
+  );
+
+  // Charger le son de victoire
+  const victoryResponse = await fetch("sounds/victory.mp3");
+  const victoryArrayBuffer = await victoryResponse.arrayBuffer();
+  victoryBuffer = await audioContext.decodeAudioData(victoryArrayBuffer);
+
+  // Charger le son spécial (easter egg)
+  const secretResponse = await fetch("sounds/secret-victory.mp3");
+  const secretArrayBuffer = await secretResponse.arrayBuffer();
+  secretVictoryBuffer = await audioContext.decodeAudioData(secretArrayBuffer);
+  // Son de défaite
+  const defeatResponse = await fetch("sounds/defeat.mp3");
+  const defeatArrayBuffer = await defeatResponse.arrayBuffer();
+  defeatBuffer = await audioContext.decodeAudioData(defeatArrayBuffer);
+}
+
+function playRandomCoinSound() {
+  if (buffers.length === 0) return;
+
+  const buffer = buffers[Math.floor(Math.random() * buffers.length)];
+  const source = audioContext.createBufferSource();
+  source.buffer = buffer;
+
+    // Définir 3 valeurs de pitch fixes
+  const pitchValues = [0.8, 1.0, 1.2];
+  const randomPitch = pitchValues[Math.floor(Math.random() * pitchValues.length)];
+  source.playbackRate.value = randomPitch;
+
+  // Connexion au haut-parleur
+  source.connect(audioContext.destination);
+  source.start();
+}
+
+function playEndSound(isPlayerWinner) {
+  let bufferToPlay = null;
+
+  if (isPlayerWinner) {
+    // 1 chance sur 100 : son spécial
+    if (secretVictoryBuffer && Math.random() < 0.01) {
+      bufferToPlay = secretVictoryBuffer;
+      console.log("🎉 Easter egg !");
+    } else {
+      bufferToPlay = victoryBuffer;
+    }
+  } else {
+    bufferToPlay = defeatBuffer;
+  }
+
+  if (bufferToPlay) {
+    const source = audioContext.createBufferSource();
+    source.buffer = bufferToPlay;
+    source.playbackRate.value = 1;
+    source.connect(audioContext.destination);
+    source.start();
+  }
+}
 
 async function main() {
   const gridDiv = document.getElementById("grid");
   const playPauseImg = document.getElementById("playpause-img");
+  document.body.addEventListener("click", () => {
+  if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+  }, { once: true });
+  await loadSounds();
+
   function renderGrid() {
     gridDiv.innerHTML = "";
     for (let r = 0; r < rows; r++) {
       const rowDiv = document.createElement("div");
       rowDiv.classList.add("row");
+
       for (let c = 0; c < cols; c++) {
         const cell = document.createElement("div");
         cell.classList.add("cell");
+
+        // Ajout des couleurs de joueur
         if (grid[r][c] === 1) cell.classList.add("red");
         if (grid[r][c] === 2) cell.classList.add("yellow");
+
+        // Vérifie si la cellule fait partie des gagnantes
+        const isWinningCell = winningCells.some(
+          ([wr, wc]) => wr === r && wc === c
+        );
+
+        if (isWinningCell) {
+          cell.classList.add("winning-cell");
+        }
+
+        // Ajoute l'animation de chute si c'est le dernier coup et pas une cellule gagnante
+        if (
+          lastMove &&
+          lastMove[0] === r &&
+          lastMove[1] === c &&
+          !isWinningCell
+        ) {
+          cell.classList.add("last-move");
+        }
+
         rowDiv.appendChild(cell);
       }
+
       gridDiv.appendChild(rowDiv);
     }
   }
+
 
   function disableControls() {
     document.getElementById("previous").disabled = true;
@@ -35,25 +145,32 @@ async function main() {
   const urlParams = new URLSearchParams(window.location.search);
   const gameId = urlParams.get("game_id");
 
+  function showGridMessage(text) {
+  const gridMessage = document.getElementById("grid-message");
+  gridMessage.textContent = text;
+  gridMessage.classList.remove("hidden");
+  }
+
+  function hideGridMessage() {
+    const gridMessage = document.getElementById("grid-message");
+    gridMessage.classList.add("hidden");
+  }
+
   if (!gameId) {
-    const message = document.createElement("p");
-    message.textContent = "Aucune partie spécifiée.";
-    message.classList.add("grid-message");
-    gridDiv.parentNode.insertBefore(message, gridDiv);
+    showGridMessage("No game specified.");
     renderGrid();
     disableControls();
-    throw new Error("game_id manquant dans l'URL");
+    throw new Error("game_id missing in URL");
   }
 
   try {
     const gameDoc = await getDoc(doc(db, "games", gameId));
     if (!gameDoc.exists()) {
-      const message = document.createElement("p");
-      message.textContent = "Partie introuvable.";
-      message.classList.add("grid-message");
-      gridDiv.parentNode.insertBefore(message, gridDiv);
-      throw new Error("Document introuvable");
+      showGridMessage("Game not found.");
+      throw new Error("Files not found in Firestore");
     }
+
+    hideGridMessage();
 
     const data = gameDoc.data();
     const firstPlayer = data.first_player || 1;
@@ -66,6 +183,11 @@ async function main() {
       for (let r = rows - 1; r >= 0; r--) {
         if (grid[r][colIndex] === 0) {
           grid[r][colIndex] = player;
+          if (shouldAnimate) {
+            lastMove = [r, colIndex]; // Pour animation si demandé
+          } else {
+            lastMove = null; // Pas d’animation si on recule
+          }
           break;
         }
       }
@@ -77,25 +199,71 @@ async function main() {
           grid[r][c] = 0;
         }
       }
+      winningCells = [];
+      endReached = false;
+      lastMove = null;
+    }
+
+    function highlightWinningCells() {
+      if (endReached) return;
+
+      const directions = [
+        { dr: 0, dc: 1 },   // Horizontal
+        { dr: 1, dc: 0 },   // Vertical
+        { dr: 1, dc: 1 },   // Diagonale /
+        { dr: 1, dc: -1 }   // Diagonale \
+      ];
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const player = grid[r][c];
+          if (player === 0) continue;
+
+          for (const { dr, dc } of directions) {
+            const cells = [];
+            for (let i = 0; i < 4; i++) {
+              const nr = r + dr * i;
+              const nc = c + dc * i;
+              if (
+                nr >= 0 && nr < rows &&
+                nc >= 0 && nc < cols &&
+                grid[nr][nc] === player
+              ) {
+                cells.push([nr, nc]);
+              } else {
+                break;
+              }
+            }
+
+            if (cells.length === 4) {
+              winningCells = cells;
+              endReached = true; // ✅ On marque la fin
+              setTimeout(renderGrid, 200);
+              return;
+            }
+          }
+        }
+      }
     }
 
     function getWinnerText() {
       const winnerColor = (currentMove % 2 === 0 ? firstPlayer : (firstPlayer === 1 ? 2 : 1));
-      return winnerColor === 1 ? "Yellow" : "Red";
+      return winnerColor === 1 ? "Yellow (Player)" : "Red (Algorithm)";
     }
 
     function showPopup(message) {
       const popup = document.getElementById("popup");
       const popupMessage = document.getElementById("popup-message");
-      
-      popup.classList.remove("hidden");
 
-      // Force animation redémarrage
-      const popupContent = popup.querySelector(".popup-content");
-      popupContent.style.animation = "none";
-      void popupContent.offsetWidth; // ← trigger reflow
-      popupContent.style.animation = "";
-      popupMessage.textContent = message;
+      setTimeout(() => {
+        const isPlayerWinner = ((currentMove - 1) % 2 === 0) === (firstPlayer === 2);
+        playEndSound(isPlayerWinner);
+      }, 200);
+
+      setTimeout(() => {
+        popup.classList.remove("hidden");
+        popupMessage.textContent = message;
+      }, 1800); // ← délai en ms
     }
 
     function updateButtons() {
@@ -121,8 +289,10 @@ async function main() {
           if (currentMove < moves.length) {
             const col = moves[currentMove] - 1;
             const player = (currentMove % 2 === 0) ? firstPlayer : (firstPlayer === 1 ? 2 : 1);
+            shouldAnimate = true;
             applyMove(col, player);
             currentMove++;
+            playRandomCoinSound();
             renderGrid();
             updateButtons();
 
@@ -132,9 +302,10 @@ async function main() {
               playPauseImg.src = "images/svg/play.svg";
               playPauseImg.alt = "Play";
               showPopup(getWinnerText() + " wins!");
+              highlightWinningCells();
             }
           }
-        }, 500);
+        }, 700);
       }
     }
 
@@ -156,6 +327,7 @@ async function main() {
         for (let i = 0; i < currentMove; i++) {
           const col = moves[i] - 1;
           const player = (i % 2 === 0) ? firstPlayer : (firstPlayer === 1 ? 2 : 1);
+          shouldAnimate = false;
           applyMove(col, player);
         }
         renderGrid();
@@ -171,8 +343,10 @@ async function main() {
         playPauseImg.alt = "Play";
         const col = moves[currentMove] - 1;
         const player = (currentMove % 2 === 0) ? firstPlayer : (firstPlayer === 1 ? 2 : 1);
+        shouldAnimate = true;
         applyMove(col, player);
         currentMove++;
+        playRandomCoinSound();
         renderGrid();
         updateButtons();
 
@@ -182,6 +356,7 @@ async function main() {
           playPauseImg.src = "images/svg/play.svg";
           playPauseImg.alt = "Play";
           showPopup(getWinnerText() + " wins!");
+          highlightWinningCells();
         }
       }
     });
@@ -202,6 +377,7 @@ async function main() {
       for (let i = 0; i < moves.length; i++) {
         const col = moves[i] - 1;
         const player = (i % 2 === 0) ? firstPlayer : (firstPlayer === 1 ? 2 : 1);
+        shouldAnimate = true;
         applyMove(col, player);
       }
       currentMove = moves.length;
@@ -212,6 +388,7 @@ async function main() {
       renderGrid();
       updateButtons();
       showPopup(getWinnerText() + " wins!");
+      highlightWinningCells();
     });
 
     document.getElementById("popup-close").addEventListener("click", () => {

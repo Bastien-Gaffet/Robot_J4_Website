@@ -74,6 +74,10 @@ tr:hover {
     font-size: 0.9rem;
   }
 
+  tr:nth-child(even) {
+  background-color: #f5f5f5;
+  }
+
   td::before {
     content: attr(data-label);
     font-weight: bold;

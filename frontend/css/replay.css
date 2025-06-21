@@ -30,13 +30,13 @@ th, td {
 #grid {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.3vw;
   margin: 20px 0;
 }
 
 .row {
   display: flex;
-  gap: 6px;
+  gap: 0.3vw;
 }
 
 .cell {
@@ -112,7 +112,7 @@ button#playpause:disabled {
 .grid-message {
   color: red;
   font-weight: bold;
-  margin-bottom: 1rem;
+  margin-bottom: 10px;
   text-align: center;
 }
 
@@ -171,4 +171,101 @@ button#playpause:disabled {
 @keyframes popup-fade {
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+.winning-cell {
+  box-shadow: 0 0 10px 5px orange;
+  animation: pulse 0.25s ease-in-out 0.2s 4;
+}
+
+@keyframes pulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.replay-container {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column; /* légende verticale */
+  gap: 20px;
+  font-weight: bold;
+  font-size: 16px;
+  user-select: none;
+  min-width: 140px;
+  margin-top: 45px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-color {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1.5px solid #333;
+}
+
+.legend-color.red {
+  background-color: red;
+}
+
+.legend-color.yellow {
+  background-color: yellow;
+}
+
+#grid {
+  flex-grow: 1;
+}
+
+@media (max-width: 767px) {
+  h1 {
+    font-size: 1.6rem;
+  }
+  
+  .replay-container {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .legend {
+    flex-direction: row;
+    gap: 20px;
+    min-width: auto;
+    justify-content: center;
+  }
+
+  #grid {
+    align-items: center;
+  }
+}
+
+.last-move {
+  animation: drop-in 0.25s ease-out;
+}
+
+@keyframes drop-in {
+  0% {
+    transform: translateY(-150px);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
