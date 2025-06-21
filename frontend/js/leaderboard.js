@@ -4,9 +4,13 @@ import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/fir
 async function loadLeaderboard() {
   const tbody = document.querySelector("#leaderboard tbody");
 
+  tbody.innerHTML = `<tr><td colspan="6">Loading...</td></tr>`;
+
   try {
     const q = query(collection(db, "games"), orderBy("timestamp", "desc"));
     const querySnapshot = await getDocs(q);
+
+    tbody.innerHTML = "";
 
     if (querySnapshot.empty) {
       console.warn("Aucune donnée trouvée dans la collection 'games'.");
@@ -24,16 +28,25 @@ async function loadLeaderboard() {
       const fields = [
         { label: "Pseudo", value: data.player_pseudo || "Anonyme" },
         { label: "Date", value: date.toLocaleString() },
-        { label: "Durée", value: `${duration.toFixed(1)}s` },
-        { label: "IA", value: data.ai_depth || "N/A" },
-        { label: "Gagnant", value: data.winner || "N/A" },
+        { label: "Duration", value: `${duration.toFixed(1)}s` },
+        { label: "AI Level", value: data.ai_depth || "N/A" },
+        { label: "Winner", value: data.winner || "N/A" },
         { label: "Replay", value: `<a href="replay.html?game_id=${data.game_id}">Replay</a>` }
       ];
 
       fields.forEach((field) => {
         const td = document.createElement("td");
         td.setAttribute("data-label", field.label);
-        td.innerHTML = field.value;
+
+        if (field.label === "Replay") {
+          const link = document.createElement("a");
+          link.href = `replay.html?game_id=${data.game_id}`;
+          link.textContent = "Replay";
+          td.appendChild(link);
+        } else {
+          td.textContent = field.value;
+        }
+
         row.appendChild(td);
       });
 
@@ -46,3 +59,14 @@ async function loadLeaderboard() {
 }
 
 loadLeaderboard();
+
+// Barre de recherche : filtre dynamique
+document.getElementById("searchInput").addEventListener("input", function () {
+  const filter = this.value.toLowerCase();
+  const rows = document.querySelectorAll("#leaderboard tbody tr");
+
+  rows.forEach((row) => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(filter) ? "" : "none";
+  });
+});
