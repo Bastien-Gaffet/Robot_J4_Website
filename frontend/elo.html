@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Profil Joueur</title>
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/elo.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="wrapper">
+    <nav class="navbar">
+      <div class="nav-container">
+        <div class="nav-logo">
+          <img src="images/logo.png" alt="Logo" height="40">
+        </div>
+        <div class="nav-links">
+          <a href="index.html">Home</a>
+          <a href="leaderboard.html">Leaderboard</a>
+          <a href="replay.html">Replay</a>
+        </div>
+      </div>
+    </nav>
+
+    <h1 id="playerName">Profile Player1</h1>
+
+    <div class="filter-buttons">
+      <button data-range="7">7 days</button>
+      <button data-range="30">30 days</button>
+      <button data-range="90" class="active">90 days</button>
+      <button data-range="365">1 year</button>
+      <button data-range="all">Total</button>
+    </div>
+
+    <canvas id="eloChart" width="1000" height="500"></canvas>
+
+    <footer>
+      <p>Presented by the Lycée Vaucanson Robot J4 Team<br>from Tours in 2025</p>
+    </footer>
+  </div>
+  <script type="module" src="js/elo.js"></script>
+</body>
+</html>

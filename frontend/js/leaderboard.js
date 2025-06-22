@@ -92,7 +92,7 @@ function renderLeaderboard(data) {
     const duration = data.duration_seconds || 0;
 
     const fields = [
-      { label: "Pseudo", value: data.player_pseudo || "Anonyme" },
+      { label: "Pseudo", value: `<a href="elo.html?pseudo=${encodeURIComponent(data.player_pseudo)}">${data.player_pseudo || "Anonyme"}</a>` },
       { label: "Date", value: date.toLocaleString() },
       { label: "Duration", value: `${duration.toFixed(1)}s` },
       { label: "AI Level", value: data.ai_depth || "N/A" },
@@ -110,9 +110,12 @@ function renderLeaderboard(data) {
         link.textContent = "Replay";
         td.appendChild(link);
       } else {
-        td.textContent = field.value;
+        if (field.label === "Pseudo") {
+          td.innerHTML = field.value;
+        } else {
+          td.textContent = field.value;
+        }
       }
-
       row.appendChild(td);
     });
 
