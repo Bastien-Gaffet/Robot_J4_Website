@@ -24,11 +24,19 @@
       </div>
     </nav>
     <h1>Game Leaderboard</h1>
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="Search a game..." />
+    </div>
     <div class="table-container">
       <table id="leaderboard">
         <thead>
           <tr>
-            <th>Username</th><th>Date</th><th>Duration</th><th>AI Level</th><th>Winner</th><th>Replay</th>
+            <th data-key="player_pseudo">Username <img class="sort-icon" src="images/svg/sort-neutral.svg" /></th>
+            <th data-key="timestamp">Date <img class="sort-icon" src="images/svg/sort-neutral.svg" /></th>
+            <th data-key="duration_seconds">Duration <img class="sort-icon" src="images/svg/sort-neutral.svg" /></th>
+            <th data-key="ai_depth">AI Level <img class="sort-icon" src="images/svg/sort-neutral.svg" /></th>
+            <th data-key="winner">Winner <img class="sort-icon" src="images/svg/sort-neutral.svg" /></th>
+            <th>Replay</th>
           </tr>
         </thead>
         <tbody></tbody>

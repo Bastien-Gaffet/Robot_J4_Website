@@ -22,6 +22,9 @@ th {
   padding: 0.75rem;
   text-transform: uppercase;
   font-size: 0.9rem;
+  cursor: pointer;
+  position: relative;
+  user-select: none;
 }
 
 td {
@@ -36,6 +39,29 @@ tr:nth-child(even) {
 
 tr:hover {
   background-color: #d2dee0;
+}
+
+#leaderboard a {
+  color: #007BFF;
+  text-decoration: none;
+}
+
+#leaderboard a:hover {
+  text-decoration: underline;
+}
+
+.search-container {
+  text-align: center;
+  margin: 1rem 0;
+}
+
+#searchInput {
+  width: 90%;
+  max-width: 400px;
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
 }
 
 @media (max-width: 768px) {
@@ -83,4 +109,17 @@ tr:hover {
     font-weight: bold;
     color: #007BFF;
   }
+}
+
+.sort-icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin-left: 5px;
+  opacity: 0.5;
+}
+
+th.sort-asc .sort-icon,
+th.sort-desc .sort-icon {
+  opacity: 1;
 }
