@@ -1,0 +1,28 @@
+h1 {
+    text-align: center;
+    padding-top: 30px;
+}
+
+.filter-buttons {
+    text-align: center;
+    margin: 1rem 0;
+}
+.filter-buttons button {
+    margin: 0.2rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    background-color: #007BFF;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.filter-buttons button.active {
+    background-color: #0056b3;
+}
+
+canvas {
+    max-width: 1000px;
+    height: 500px;      /* ou auto, ou en vh */
+    margin: 2rem auto;
+    display: block;
+}

@@ -10,6 +10,10 @@ body {
   overflow-x: hidden;
 }
 
+h1 {
+  padding-top: 30px;
+}
+
 table {
   width: 100%;
   min-width: 600px; /* ou plus selon ton contenu */
