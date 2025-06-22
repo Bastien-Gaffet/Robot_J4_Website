@@ -49,10 +49,7 @@ function playRandomCoinSound() {
   const source = audioContext.createBufferSource();
   source.buffer = buffer;
 
-    // Définir 3 valeurs de pitch fixes
-  const pitchValues = [0.8, 1.0, 1.2];
-  const randomPitch = pitchValues[Math.floor(Math.random() * pitchValues.length)];
-  source.playbackRate.value = randomPitch;
+  source.playbackRate.value = 0.9 + Math.random() * 0.2;
 
   // Connexion au haut-parleur
   source.connect(audioContext.destination);
