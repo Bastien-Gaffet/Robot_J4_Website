@@ -144,6 +144,24 @@ footer {
     z-index: 1000;
   }
 
+  /* Bouton retour en haut */
+  #backtotopBtn {
+    opacity: 0;
+    pointer-events: none; /* empêche le clic quand invisible */
+    transition: opacity 0.4s ease;
+    position: fixed;
+    bottom: 75px;
+    right: 15px;
+    background-color: #004080;
+    color: white;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 1001;
+  }
+
   /* Décaler le contenu principal pour éviter le cache */
   body {
     display: block !important;
@@ -175,6 +193,10 @@ footer {
     color: #fff;                      /* texte & icône en blanc */
     background: #007BFF;              /* fond bleu du thème */
     border-radius: 0.5rem 0.5rem 0 0; /* coins arrondis en haut */
+  }
+
+  .wrapper + footer {
+    margin-bottom: 1.2rem; /* ou 3rem si tu veux plus d’espace */
   }
 
   .navbar {
