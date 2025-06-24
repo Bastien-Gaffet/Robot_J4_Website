@@ -1,6 +1,10 @@
 // === server.js ===
 const WebSocket = require("ws");
-const server = new WebSocket.Server({ port: 8080 });
+
+// Écouter le port fourni par Render ou par défaut 8080
+const port = process.env.PORT || 8080;
+const server = new WebSocket.Server({ port });
+console.log(`WebSocket server listening on port ${port}`);
 
 let waitingPlayer = null;
 let games = new Map(); // Map<GameID, { players: [ws1, ws2], grid, currentPlayer }>
@@ -32,20 +36,27 @@ function checkVictory(grid, player) {
 }
 
 function send(ws, data) {
-  ws.send(JSON.stringify(data));
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(data));
+  }
 }
 
 server.on("connection", (ws) => {
+  console.log('New client connected');
+
+  // Si on n'attend personne, ce WS devient le joueur en attente
   if (waitingPlayer === null) {
     waitingPlayer = ws;
-    ws.send(JSON.stringify({ type: "waiting" }));
+    send(ws, { type: "waiting" });
   } else {
+    // On crée une nouvelle partie
     const gameId = Math.random().toString(36).substr(2, 6);
     const grid = createEmptyGrid();
     const players = [waitingPlayer, ws];
-    const currentPlayer = 1;
+    let currentPlayer = 1;
     games.set(gameId, { players, grid, currentPlayer });
 
+    // Envoyer le début de partie aux deux joueurs
     players.forEach((p, idx) => {
       send(p, {
         type: "start",
@@ -55,32 +66,58 @@ server.on("connection", (ws) => {
     });
     waitingPlayer = null;
 
+    // Gestion des messages pour cette partie
     players.forEach((p) => {
       p.on("message", (msg) => {
-        const data = JSON.parse(msg);
-        if (data.type === "move") {
-          const game = games.get(gameId);
-          if (!game || game.currentPlayer !== data.player) return;
+        try {
+          const data = JSON.parse(msg);
+          if (data.type === "move") {
+            const game = games.get(gameId);
+            if (!game || game.currentPlayer !== data.player) return;
 
-          const col = data.column;
-          const row = game.grid.slice().reverse().findIndex(row => row[col] === 0);
-          if (row === -1) return;
-          const actualRow = 5 - row;
-          game.grid[actualRow][col] = data.player;
+            // Calcul de la ligne où tomberait le jeton
+            const col = data.column;
+            const rowIdx = game.grid.slice().reverse().findIndex(row => row[col] === 0);
+            if (rowIdx === -1) return;
+            const actualRow = 5 - rowIdx;
+            game.grid[actualRow][col] = data.player;
 
-          const victory = checkVictory(game.grid, data.player);
+            const victory = checkVictory(game.grid, data.player);
 
-          game.players.forEach(client => {
-            send(client, {
-              type: "move",
-              column: col,
-              row: actualRow,
-              player: data.player,
-              victory
+            // Envoyer le coup et état à tous les clients
+            game.players.forEach(client => {
+              send(client, {
+                type: "move",
+                column: col,
+                row: actualRow,
+                player: data.player,
+                victory
+              });
             });
-          });
 
-          if (!victory) game.currentPlayer = 3 - game.currentPlayer;
+            // Si pas de victoire, on change de joueur
+            if (!victory) game.currentPlayer = 3 - game.currentPlayer;
+          }
+        } catch (e) {
+          console.error('Invalid message', e);
+        }
+      });
+
+      // Gérer la déconnexion d'un joueur
+      p.on("close", () => {
+        console.log('Client disconnected');
+        // Si c'était le joueur en attente
+        if (waitingPlayer === p) waitingPlayer = null;
+
+        // Si partie en cours, prévenir l'autre
+        const game = Array.from(games.entries()).find(([id, g]) => g.players.includes(p));
+        if (game) {
+          const [id, g] = game;
+          const other = g.players.find(x => x !== p);
+          if (other && other.readyState === WebSocket.OPEN) {
+            send(other, { type: "opponent_left" });
+          }
+          games.delete(id);
         }
       });
     });
