@@ -84,9 +84,7 @@ function renderPage() {
       <td class="left-align" data-label="Rank">
         <span class="rank-badge ${rankClass}">#${entry.rank}</span>
       </td>
-      <td class="left-align" data-label="Username">
-        <a href="elo.html?pseudo=${encodeURIComponent(entry.pseudo)}">${entry.pseudo}</a>
-      </td>
+      <td class="left-align" data-label="Username">${entry.pseudo}</td>
       <td class="center-align" data-label="Elo">${entry.elo}</td>
       <td class="win center-align" data-label="Wins">
         <span class="stat stat-raw">${entry.win}</span>
@@ -101,6 +99,12 @@ function renderPage() {
         <span class="stat stat-pct">${lossPct}%</span>
       </td>
     `;
+
+    row.style.cursor = "pointer";
+    row.addEventListener("click", () => {
+      window.location.href = `profile.html?pseudo=${encodeURIComponent(entry.pseudo)}`;
+    });
+    
     tbody.appendChild(row);
   });
   renderPaginationControls();
