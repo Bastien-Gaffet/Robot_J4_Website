@@ -72,7 +72,7 @@ popupClose.addEventListener("click", () => {
 });
 
 // Connexion WebSocket
-const socket = new WebSocket("wss://puissance4-server.onrender.com");
+const socket = new WebSocket("wss://connect4-server.onrender.com");
 
 socket.onopen = () => {
   statusP.textContent = "Connexion établie, en attente d’adversaire...";
