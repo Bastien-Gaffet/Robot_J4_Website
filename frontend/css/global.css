@@ -134,6 +134,40 @@ footer {
   margin: 0 auto 0.25rem;
 }
 
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 0.20rem;
+  margin: 1rem 0 2rem;
+  flex-wrap: wrap;
+}
+
+.pagination button {
+  background-color: #007BFF;
+  color: #fff;
+  border: none;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.9rem;
+  border-radius: 5px;
+  cursor: pointer;
+  min-width: 32px;
+}
+
+.pagination button:hover {
+  background-color: #0066cc;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background-color: #999999;
+}
+
+.pagination .active {
+  background-color: #0056b3;
+  font-weight: bold;
+}
+
 /* Mobile only */
 @media (max-width: 768px) {
   .bottom-nav {
@@ -183,6 +217,10 @@ footer {
   h1 {
     padding-top: 0 !important;
     text-align: center;
+  }
+
+  .pagination {
+    margin-bottom: 3rem !important;
   }
 
   /* Item inactif */
