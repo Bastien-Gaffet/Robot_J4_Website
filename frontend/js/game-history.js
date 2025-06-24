@@ -2,53 +2,71 @@ import { db } from "./firebase-init.js";
 import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 let leaderboardData = [];
+let filteredData = [];
 let currentSort = { key: null, order: null };
 let searchFilter = "";
+let currentPage = 1;
+let pageSize = determinePageSize();
+let totalPages = 1;
 
-// Chargement initial
+// DOM réfs
+const tbody = document.querySelector("#leaderboard tbody");
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
+const pageInfo = document.getElementById("pageInfo");
+
+// Ajuste pageSize selon largeur
+function determinePageSize() {
+  return window.innerWidth <= 768 ? 3 : 50;
+}
+window.addEventListener("resize", () => {
+  const newSize = determinePageSize();
+  if (newSize !== pageSize) {
+    pageSize = newSize;
+    currentPage = 1;
+    applyFilterAndSort();
+  }
+});
+
 loadLeaderboard();
 
-// Initialiser le tri visuel sur la colonne "Date"
-const initialTh = document.querySelector('th[data-key="timestamp"]');
-if (initialTh) {
-  initialTh.classList.add("sort-desc");
-  const icon = initialTh.querySelector(".sort-icon");
-  if (icon) icon.src = "images/svg/sort-down.svg";
-}
-
-// Définir le tri initial
-currentSort = { key: "timestamp", order: "desc" };
-
+// Search
 document.getElementById("searchInput").addEventListener("input", function () {
   searchFilter = this.value.toLowerCase();
+  currentPage = 1;
   applyFilterAndSort();
 });
 
-async function loadLeaderboard() {
-  const tbody = document.querySelector("#leaderboard tbody");
-  tbody.innerHTML = `<tr><td colspan="6">Loading...</td></tr>`;
+// Pagination buttons
+prevBtn.addEventListener("click", () => {
+  if (currentPage > 1) {
+    currentPage--;
+    renderLeaderboard();
+  }
+});
+nextBtn.addEventListener("click", () => {
+  if (currentPage < totalPages) {
+    currentPage++;
+    renderLeaderboard();
+  }
+});
 
+async function loadLeaderboard() {
+  tbody.innerHTML = `<tr><td colspan="6">Loading...</td></tr>`;
   try {
     const q = query(collection(db, "games"), orderBy("timestamp", "desc"));
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-      tbody.innerHTML = `<tr><td colspan="6">No games found</td></tr>`;
-      return;
-    }
-
-    leaderboardData = [];
-    querySnapshot.forEach((doc) => leaderboardData.push(doc.data()));
-    applyFilterAndSort();
-
-  } catch (error) {
-    console.error("Error while fetching games:", error);
-    tbody.innerHTML = `<tr><td colspan="6">Error loading data</td></tr>`;
+    const snapshot = await getDocs(q);
+    leaderboardData = snapshot.empty ? [] : snapshot.docs.map(d => d.data());
+  } catch (err) {
+    console.error(err);
+    tbody.innerHTML = `<tr><td colspan="6">Erreur de chargement</td></tr>`;
+    return;
   }
+  applyFilterAndSort();
 }
 
 function applyFilterAndSort() {
-  let filtered = leaderboardData.filter(entry =>
+  filteredData = leaderboardData.filter(entry =>
     Object.values(entry).some(val =>
       String(val).toLowerCase().includes(searchFilter)
     )
@@ -56,98 +74,150 @@ function applyFilterAndSort() {
 
   if (currentSort.key) {
     const { key, order } = currentSort;
-    filtered.sort((a, b) => {
-      let aVal = a[key];
-      let bVal = b[key];
-
-      if (key === "timestamp") {
-        aVal = aVal?.toDate ? aVal.toDate() : new Date(aVal);
-        bVal = bVal?.toDate ? bVal.toDate() : new Date(bVal);
-      }
-
-      if (aVal === undefined) return 1;
-      if (bVal === undefined) return -1;
-
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        return order === "asc" ? aVal - bVal : bVal - aVal;
-      }
-
+    filteredData.sort((a, b) => {
+      let aVal = key === "timestamp"
+        ? (a[key]?.toDate ? a[key].toDate() : new Date(a[key]))
+        : a[key];
+      let bVal = key === "timestamp"
+        ? (b[key]?.toDate ? b[key].toDate() : new Date(b[key]))
+        : b[key];
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+      if (typeof aVal === "number") return order === "asc" ? aVal - bVal : bVal - aVal;
       return order === "asc"
         ? String(aVal).localeCompare(String(bVal))
         : String(bVal).localeCompare(String(aVal));
     });
   }
 
-  renderLeaderboard(filtered);
+  // forcer recalcul pageSize (important pour que le rendu initial soit correct)
+  pageSize = determinePageSize();
+  totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  renderLeaderboard();
 }
 
-function renderLeaderboard(data) {
-  const tbody = document.querySelector("#leaderboard tbody");
+
+function renderLeaderboard() {
   tbody.innerHTML = "";
 
-  data.forEach((data) => {
+  if (filteredData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6">No games found</td></tr>`;
+    document.getElementById("pagination").innerHTML = "";
+    return;
+  }
+
+  const start = (currentPage - 1) * pageSize;
+  const pageData = filteredData.slice(start, start + pageSize);
+
+  pageData.forEach(data => {
     const row = document.createElement("tr");
-
     const date = data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
-    const duration = data.duration_seconds || 0;
-
-    const fields = [
-      { label: "Pseudo", value: `<a href="elo.html?pseudo=${encodeURIComponent(data.player_pseudo)}">${data.player_pseudo || "Anonyme"}</a>` },
-      { label: "Date", value: date.toLocaleString() },
-      { label: "Duration", value: `${duration.toFixed(1)}s` },
-      { label: "AI Level", value: data.ai_depth || "N/A" },
-      { label: "Winner", value: data.winner || "N/A" },
-      { label: "Replay", value: `<a href="replay.html?game_id=${data.game_id}" target="_blank">Replay</a>` }
+    const duration = (data.duration_seconds || 0).toFixed(1) + "s";
+    const cells = [
+      `<a href="elo.html?pseudo=${encodeURIComponent(data.player_pseudo)}">${data.player_pseudo || "Anonymous"}</a>`,
+      date.toLocaleString(),
+      duration,
+      data.ai_depth || "N/A",
+      data.winner || "N/A",
+      `<a href="replay.html?game_id=${data.game_id}" target="_blank">Replay</a>`
     ];
 
-    fields.forEach((field) => {
+    cells.forEach((html, i) => {
       const td = document.createElement("td");
-      td.setAttribute("data-label", field.label);
-
-      if (field.label === "Replay") {
-        const link = document.createElement("a");
-        link.href = `replay.html?game_id=${data.game_id}`;
-        link.textContent = "Replay";
-        td.appendChild(link);
-      } else {
-        if (field.label === "Pseudo") {
-          td.innerHTML = field.value;
-        } else {
-          td.textContent = field.value;
-        }
-      }
+      td.setAttribute("data-label", ["Username", "Date", "Duration", "AI Level", "Winner", "Replay"][i]);
+      td.innerHTML = html;
       row.appendChild(td);
     });
 
     tbody.appendChild(row);
   });
+  // Scroll vers le haut quand on change de page
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  renderPaginationControls();
 }
 
-// Gestion du tri des colonnes
-document.querySelectorAll("#leaderboard th").forEach((th) => {
-  const key = th.getAttribute("data-key");
-  if (!key) return; // Ignorer les colonnes sans clé (comme "Replay")
-
+// Tri des colonnes (inchangé)
+document.querySelectorAll("#leaderboard th").forEach(th => {
+  const key = th.dataset.key;
+  if (!key) return;
   th.addEventListener("click", () => {
-    const currentOrder = th.classList.contains("sort-asc") ? "asc" :
-                         th.classList.contains("sort-desc") ? "desc" : null;
-    const newOrder = currentOrder === "asc" ? "desc" : "asc";
-
+    const asc = th.classList.contains("sort-asc");
+    const desc = th.classList.contains("sort-desc");
+    const newOrder = asc ? "desc" : "asc";
     currentSort = { key, order: newOrder };
-
-    // Réinitialiser les icônes et classes
-    document.querySelectorAll("#leaderboard th").forEach(otherTh => {
-      otherTh.classList.remove("sort-asc", "sort-desc");
-      const icon = otherTh.querySelector(".sort-icon");
-      if (icon) icon.src = "images/svg/sort-neutral.svg";
-    });
-
+    // reset icônes et classes
+    document.querySelectorAll("#leaderboard th")
+      .forEach(o => o.classList.remove("sort-asc","sort-desc"));
     th.classList.add(`sort-${newOrder}`);
-    const icon = th.querySelector(".sort-icon");
-    if (icon) icon.src = newOrder === "asc"
-      ? "images/svg/sort-up.svg"
-      : "images/svg/sort-down.svg";
-
+    th.querySelector(".sort-icon").src = `images/svg/sort-${newOrder==='asc'?'up':'down'}.svg`;
+    currentPage = 1;
     applyFilterAndSort();
   });
 });
+
+function renderPaginationControls() {
+  const container = document.getElementById("pagination");
+  container.innerHTML = "";
+
+  const createBtn = (label, page, disabled = false, isActive = false) => {
+    const btn = document.createElement("button");
+    btn.textContent = label;
+    if (disabled) btn.disabled = true;
+    if (isActive) btn.classList.add("active");
+    btn.addEventListener("click", () => {
+      if (!disabled && !isActive) {
+        currentPage = page;
+        renderLeaderboard();
+      }
+    });
+    return btn;
+  };
+
+  const addEllipsis = () => {
+    const span = document.createElement("span");
+    span.textContent = "…";
+    span.style.margin = "0 5px";
+    span.style.userSelect = "none";
+    container.appendChild(span);
+  };
+
+  totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
+
+  // 1) First et Prev
+  container.appendChild(createBtn("First", 1, currentPage === 1));
+  container.appendChild(createBtn("‹", currentPage - 1, currentPage === 1));
+
+  // 2) Calcul du bloc de 3 pages autour de currentPage
+  let start = currentPage - 1;
+  let end   = currentPage + 1;
+  if (start < 1) {
+    start = 1;
+    end = Math.min(3, totalPages);
+  }
+  if (end > totalPages) {
+    end = totalPages;
+    start = Math.max(1, totalPages - 2);
+  }
+
+  // 3) Ellipsis AVANT si on n'inclut pas la page 1
+  if (start > 1) {
+    addEllipsis();
+  }
+
+  // 4) Affichage du bloc de pages [start..end]
+  for (let p = start; p <= end; p++) {
+    const isActive = (p === currentPage);
+    container.appendChild(createBtn(p, p, false, isActive));
+  }
+
+  // 5) Ellipsis APRÈS si on n'inclut pas la dernière page
+  if (end < totalPages) {
+    addEllipsis();
+  }
+
+  // 6) Next et Last
+  container.appendChild(createBtn("›", currentPage + 1, currentPage === totalPages));
+  container.appendChild(createBtn("Last", totalPages, currentPage === totalPages));
+}

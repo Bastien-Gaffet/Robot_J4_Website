@@ -9,48 +9,41 @@
   <link rel="stylesheet" href="css/leaderboard.css">
 </head>
 <body>
-  <div class="wrapper">
-    <!-- Common navigation bar -->
-    <nav class="navbar">
-      <div class="nav-container">
-        <div class="nav-logo">
-          <img src="images/logo.png" alt="Logo" height="40" />
-        </div>
-        <div class="nav-links">
-          <a href="index.html">Home</a>
-          <a href="leaderboard.html" class="active">Leaderboard</a>
-          <a href="game-history.html">Game history</a>
-        </div>
+  <!-- Common navigation bar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <img src="images/logo.png" alt="Logo" height="40" />
       </div>
-    </nav>
-    <h1>Player Leaderboard</h1>
-    <div class="table-container">
-      <table id="leaderboard">
-        <thead>
-          <tr>
-            <th class="left-align"></th>
-            <th class="left-align">Username</th>
-            <th class="center-align">Elo</th>
-            <th class="center-align">Won</th>
-            <th class="center-align">Draw</th>
-            <th class="center-align">Lost</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="leaderboard.html" class="active">Leaderboard</a>
+        <a href="game-history.html">Game history</a>
+      </div>
     </div>
-
-    <script type="module" src="js/leaderboard.js"></script>
-
-    <!-- Back to Top Button -->
-    <button id="backtotopBtn" title="Back to top">↑</button>
-    <script src="js/global.js"></script>
+  </nav>
+  <h1>Player Leaderboard</h1>
+  <div class="table-container">
+    <table id="leaderboard">
+      <thead>
+        <tr>
+          <th class="left-align"></th>
+          <th class="left-align">Username</th>
+          <th class="center-align">Elo</th>
+          <th class="center-align">Won</th>
+          <th class="center-align">Draw</th>
+          <th class="center-align">Lost</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
-  
-  <!-- Footer -->
-  <footer>
-    <p>Presented by the Lycée Vaucanson Robot J4 Team<br>from Tours in 2025</p>
-  </footer>
+
+  <script type="module" src="js/leaderboard.js"></script>
+
+  <!-- Back to Top Button -->
+  <button id="backtotopBtn" title="Back to top">↑</button>
+  <script src="js/global.js"></script>
   <!-- Bottom Navigation Bar pour mobile -->
   <nav class="bottom-nav">
     <a href="index.html" class="nav-item" aria-label="Home">
