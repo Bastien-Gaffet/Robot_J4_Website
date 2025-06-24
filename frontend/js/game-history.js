@@ -14,7 +14,7 @@ const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 
 function determinePageSize() {
-  return window.innerWidth <= 768 ? 3 : 50;
+  return window.innerWidth <= 768 ? 5 : 50;
 }
 window.addEventListener("resize", () => {
   const newSize = determinePageSize();
