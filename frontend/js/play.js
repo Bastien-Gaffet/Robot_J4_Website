@@ -1,7 +1,8 @@
+// === play.js ===
 const rows = 6, cols = 7;
 const grid = Array.from({ length: rows }, () => Array(cols).fill(0));
 
-let playerNumber = 0; // 1 ou 2
+let playerNumber = 0;      // 1 ou 2
 let currentPlayer = 0;
 let gameId = null;
 let gameEnded = false;
@@ -29,14 +30,11 @@ function renderGrid() {
 
       cell.dataset.col = c;
 
-      // Activation du clic uniquement si c'est le tour du joueur, partie en cours et case possible
-      if (!gameEnded && currentPlayer === playerNumber) {
-        // La colonne n'est jouable que si la dernière case de la colonne est vide
+      // Activation du clic uniquement si le socket est ouvert, partie en cours et c'est ton tour
+      if (!gameEnded && socket.readyState === WebSocket.OPEN && currentPlayer === playerNumber) {
         if (grid[0][c] === 0) {
           cell.style.cursor = "pointer";
-          cell.addEventListener("click", () => {
-            playMove(c);
-          });
+          cell.addEventListener("click", () => playMove(c));
         }
       }
 
@@ -47,15 +45,16 @@ function renderGrid() {
 }
 
 function playMove(col) {
+  // Attendre que WebSocket soit ouvert
+  if (socket.readyState !== WebSocket.OPEN) {
+    console.warn("WebSocket non ouvert, impossibilité d'envoyer le coup");
+    return;
+  }
   if (gameEnded) return;
   if (currentPlayer !== playerNumber) return;
   if (grid[0][col] !== 0) return; // Colonne pleine
 
-  socket.send(JSON.stringify({
-    type: "move",
-    column: col,
-    player: playerNumber
-  }));
+  socket.send(JSON.stringify({ type: "move", column: col, player: playerNumber }));
 }
 
 function applyMove(row, col, player) {
@@ -67,45 +66,55 @@ function showPopup(message) {
   popup.classList.remove("hidden");
 }
 
-popupClose.addEventListener("click", () => {
-  popup.classList.add("hidden");
-});
+popupClose.addEventListener("click", () => popup.classList.add("hidden"));
 
-// Connexion WebSocket
-const socket = new WebSocket("wss://connect4-server.onrender.com");
+// Connexion WebSocket (met l'URL de ton service Render)
+const socket = new WebSocket("https://connect4-server-mfwo.onrender.com/");
 
 socket.onopen = () => {
+  console.log("WebSocket ouvert");
   statusP.textContent = "Connexion établie, en attente d’adversaire...";
+  // On peut afficher une grille vide instantly
+  renderGrid();
 };
 
 socket.onmessage = (event) => {
   const data = JSON.parse(event.data);
 
-  if (data.type === "waiting") {
-    statusP.textContent = "En attente d’un autre joueur...";
-  }
+  switch (data.type) {
+    case "waiting":
+      statusP.textContent = "En attente d’un autre joueur...";
+      break;
 
-  else if (data.type === "start") {
-    gameId = data.gameId;
-    playerNumber = data.playerNumber;
-    currentPlayer = 1;
-    statusP.textContent = `Partie démarrée (ID: ${gameId})`;
-    playerColorSpan.textContent = playerNumber === 1 ? "Rouge" : "Jaune";
-    turnIndicator.textContent = currentPlayer === playerNumber ? "À toi de jouer" : "À l’adversaire de jouer";
-    renderGrid();
-  }
+    case "start":
+      gameId = data.gameId;
+      playerNumber = data.playerNumber;
+      currentPlayer = 1;
+      statusP.textContent = `Partie démarrée (ID: ${gameId})`;
+      playerColorSpan.textContent = playerNumber === 1 ? "Rouge" : "Jaune";
+      turnIndicator.textContent = currentPlayer === playerNumber ? "À toi de jouer" : "À l’adversaire de jouer";
+      renderGrid();
+      break;
 
-  else if (data.type === "move") {
-    applyMove(data.row, data.column, data.player);
-    currentPlayer = data.victory ? 0 : (3 - currentPlayer); // Passe au joueur suivant sauf si victoire
-    turnIndicator.textContent = currentPlayer === playerNumber ? "À toi de jouer" : "À l’adversaire de jouer";
-    renderGrid();
+    case "move":
+      applyMove(data.row, data.column, data.player);
+      if (data.victory) {
+        gameEnded = true;
+        const texte = data.player === playerNumber ? "Tu as gagné !" : "Tu as perdu.";
+        showPopup(texte);
+      } else {
+        currentPlayer = 3 - currentPlayer;
+        turnIndicator.textContent = currentPlayer === playerNumber ? "À toi de jouer" : "À l’adversaire de jouer";
+      }
+      renderGrid();
+      break;
 
-    if (data.victory) {
-      gameEnded = true;
-      const winnerText = data.player === playerNumber ? "Tu as gagné !" : "Tu as perdu.";
-      showPopup(winnerText);
-    }
+    case "opponent_left":
+      showPopup("Ton adversaire a quitté la partie.");
+      break;
+
+    default:
+      console.warn("Type de message inconnu :", data.type);
   }
 };
 
@@ -116,5 +125,3 @@ socket.onerror = () => {
 socket.onclose = () => {
   if (!gameEnded) statusP.textContent = "Connexion fermée.";
 };
-
-renderGrid();
