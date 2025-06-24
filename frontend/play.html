@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Puissance 4 Multijoueur</title>
+  <link rel="stylesheet" href="css/replay.css" />
+</head>
+<body>
+  <h1>Puissance 4 - Partie en ligne</h1>
+  <p id="status" style="text-align:center; font-weight:bold; color: red; margin-top: 0.5em;"></p>
+  <div id="grid"></div>
+  <div id="info" style="text-align:center; margin-top: 10px;">
+    <span>Tu es : <span id="player-color">-</span></span> |
+    <span id="turn-indicator">En attente...</span>
+  </div>
+
+  <!-- Popup victoire -->
+  <div id="popup" class="hidden">
+    <div class="popup-content">
+      <p id="popup-message"></p>
+      <button id="popup-close">OK</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/play.js"></script>
+</body>
+</html>
