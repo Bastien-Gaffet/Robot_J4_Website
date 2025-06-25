@@ -1,0 +1,85 @@
+/* Conteneur général */
+.container {
+  max-width: 400px;
+  margin: 80px auto;
+  padding: 2rem;
+  background-color: #d5d9e6;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  text-align: center;
+}
+
+/* Barre d’onglets */
+.tab-bar {
+  display: flex;
+  border-bottom: 2px solid #aaa;
+  margin-bottom: 1.5rem;
+}
+
+.tab {
+  flex: 1;
+  padding: 0.75rem 0;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #555;
+  transition: color 0.2s;
+}
+
+.tab:hover {
+  color: #007BFF;
+}
+
+.tab.active {
+  color: #007BFF;
+  border-bottom: 3px solid #007BFF;
+}
+
+/* Titre */
+h1 {
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+  color: #222;
+}
+
+/* Champs de saisie */
+input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  border: 1px solid #aaa;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+/* Bouton */
+#submit-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+#submit-btn:hover {
+  background-color: #0056b3;
+}
+
+/* Message d’erreur */
+.error {
+  color: red;
+  margin-top: 1rem;
+  min-height: 1.2em;
+}
+
+/* Champ token (initialement caché) */
+#claim-token-section {
+  display: none; /* le JS l’affichera selon l’onglet */
+}

@@ -70,3 +70,6 @@ node_modules/
 
 #temporary files
 .tmp
+
+#Five Server
+.fiveserverrc.json

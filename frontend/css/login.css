@@ -1,0 +1,56 @@
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-top: 58px;
+}
+
+h1 {
+  text-align: center;
+  color: #222;
+  margin: 2rem 0 1rem;
+}
+
+h3 {
+    text-align: center;
+    color: #7c7c7c;
+}
+
+/* Centrage du conteneur principal */
+#firebaseui-auth-container {
+  max-width: 400px;
+  margin: auto;
+  padding: 2rem;
+  background-color: #d5d9e6;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+}
+
+/* Mise à jour de l'espacement des boutons FirebaseUI */
+.firebaseui-idp-button {
+  margin: 0.5rem 0;
+}
+
+/* Ajout d'un espacement vers le bas si affiché sur ordinateur */
+@media (min-width: 768px) {
+  body {
+    justify-content: start;
+    padding-top: 100px;
+  }
+
+  #firebaseui-auth-container {
+    margin-top: 1rem;
+  }
+}
+
+/* Sur mobile : centré verticalement */
+@media (max-width: 767px) {
+  body {
+    justify-content: center;
+    padding-top: 20px;
+  }
+
+  #firebaseui-auth-container {
+    width: 90%;
+  }
+}

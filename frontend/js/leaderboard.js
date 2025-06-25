@@ -39,7 +39,7 @@ async function loadLeaderboard() {
     leaderboardData = snapshot.docs.map(doc => {
       const data = doc.data();
       return {
-        pseudo: doc.id,
+        pseudo: data.pseudo,
         elo: data.elo ?? 0,
         games: data.games_played ?? data.elo_history?.length ?? 0,
         win: data.wins ?? 0,

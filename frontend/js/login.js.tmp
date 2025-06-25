@@ -1,0 +1,71 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, query, where, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "...",
+  authDomain: "...",
+  projectId: "...",
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+async function pseudoExists(pseudo) {
+  const q = query(collection(db, "users"), where("pseudo_lower", "==", pseudo.toLowerCase()));
+  const snapshot = await getDocs(q);
+  return !snapshot.empty;
+}
+
+async function createUserDoc(user, pseudo) {
+  const userRef = doc(db, "users", user.uid);
+  const docSnap = await getDoc(userRef);
+
+  if (!docSnap.exists()) {
+    await setDoc(userRef, {
+      pseudo: pseudo,
+      pseudo_lower: pseudo.toLowerCase(),
+      elo: 500,
+      elo_history: [
+        {
+          game_id: "initial",
+          timestamp: new Date(),
+          elo: 500
+        }
+      ],
+      wins: 0,
+      losses: 0,
+      draws: 0
+    });
+  }
+}
+
+document.getElementById("login-btn").addEventListener("click", async () => {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const result = await signInWithEmailAndPassword(auth, email, password);
+  window.location.href = "index.html";
+});
+
+document.getElementById("signup-btn").addEventListener("click", async () => {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const pseudo = document.getElementById("pseudo").value;
+
+  if (!pseudo) {
+    alert("Veuillez entrer un pseudo.");
+    return;
+  }
+
+  const alreadyUsed = await pseudoExists(pseudo);
+  if (alreadyUsed) {
+    alert("Ce pseudo est déjà pris.");
+    return;
+  }
+
+  const result = await createUserWithEmailAndPassword(auth, email, password);
+  await createUserDoc(result.user, pseudo);
+  window.location.href = "index.html";
+});

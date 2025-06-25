@@ -1,5 +1,8 @@
 import { db } from "./firebase-init.js";
-import { doc, getDoc, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  collection, getDocs,
+  query, orderBy, where
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const urlParams = new URLSearchParams(window.location.search);
 const pseudo = urlParams.get("pseudo");
@@ -13,28 +16,33 @@ let eloData = [];
 let chart;
 
 async function loadPlayerData() {
-    const docRef = doc(db, "users", pseudo);
-    const docSnap = await getDoc(docRef);
+    const q = query(
+        collection(db, "users"),
+        where("pseudo_lower", "==", pseudo.toLowerCase())
+    );
+    const snapshot = await getDocs(q);
 
-    if (!docSnap.exists()) {
+    if (snapshot.empty) {
         alert("Joueur non trouvé.");
         return;
     }
 
+    const docSnap = snapshot.docs[0];
     const userData = docSnap.data();
+    const userUid = docSnap.id;
 
     // Affiche l'Elo actuel
     currentEloSpan.textContent = userData.elo ?? "N/A";
 
     // Récupérer le classement global
     const usersRef = collection(db, "users");
-    const q = query(usersRef, orderBy("elo", "desc"));
-    const querySnapshot = await getDocs(q);
+    const qRank = query(usersRef, orderBy("elo", "desc"));
+    const querySnapshot = await getDocs(qRank);
 
     let rank = 1;
     let found = false;
-    querySnapshot.forEach(docSnap => {
-        if (!found && docSnap.id === pseudo) {
+    querySnapshot.forEach(d => {
+        if (!found && d.id === userUid) {
             found = true;
             globalRankSpan.textContent = rank;
         }
