@@ -16,6 +16,7 @@ h1 {
     border-radius: 5px;
     cursor: pointer;
 }
+
 .filter-buttons button.active {
     background-color: #0056b3;
 }

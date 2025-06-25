@@ -39,3 +39,5 @@ function scrollFunction() {
 document.getElementById("backtotopBtn").onclick = function () {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+

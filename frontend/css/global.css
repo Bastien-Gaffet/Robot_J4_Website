@@ -43,6 +43,12 @@ body {
   margin-bottom: 0;
 }
 
+.nav-logo span {
+  color: white;
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
 .nav-links {
   display: flex;
   gap: 20px;
@@ -126,7 +132,7 @@ footer {
   font-weight: 600;
 }
 
-.bottom-nav .nav-item .icon {
+.bottom-nav .nav-item svg.icon {
   width: 1.5rem;
   height: 1.5rem;
   fill: currentColor;
@@ -227,7 +233,7 @@ footer {
   .bottom-nav .nav-item {
     color: #007BFF;
     background: transparent;
-    transition: background 0.2s, color 0.2s;
+    transition: color 0.2s ease, background-color 0.2s ease;
   }
 
   /* Item actif */

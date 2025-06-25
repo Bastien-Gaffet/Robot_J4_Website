@@ -1,15 +1,15 @@
 {
   "root": "frontend",
   "rewrites": [
-    { "source": "/login", "destination": "/login.html" },
-    { "source": "/home", "destination": "/home.html" },
-    { "source": "/leaderboard", "destination": "/leaderboard.html" },
-    { "source": "/game-history", "destination": "/game-history.html" },
-    { "source": "/play", "destination": "/play.html" },
-    { "source": "/profile", "destination": "/profile.html" },
-    { "source": "/replay", "destination": "/replay.html" },
-    { "source": "/choose-username", "destination": "/choose-username.html" },
-    { "source": "/404", "destination": "/404.html" },
+    { "source": "/login*", "destination": "/login.html" },
+    { "source": "/home*", "destination": "/home.html" },
+    { "source": "/leaderboard*", "destination": "/leaderboard.html" },
+    { "source": "/game-history*", "destination": "/game-history.html" },
+    { "source": "/play*", "destination": "/play.html" },
+    { "source": "/profile*", "destination": "/profile.html" },
+    { "source": "/replay*", "destination": "/replay.html" },
+    { "source": "/choose-username*", "destination": "/choose-username.html" },
+    { "source": "/404*", "destination": "/404.html" },
     { "source": "/", "destination": "/home.html" }
   ]
 }

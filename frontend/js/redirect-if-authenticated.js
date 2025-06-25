@@ -4,6 +4,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/f
 
 onAuthStateChanged(auth, user => {
   if (user) {
-    window.location.href = 'home.html';
+    window.location.href = '/home';
   }
 });
