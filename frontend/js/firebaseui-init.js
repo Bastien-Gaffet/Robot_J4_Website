@@ -38,10 +38,10 @@ const uiConfig = {
         const snap = await db.collection("users").doc(user.uid).get();
         if (snap.exists) {
           // Le profil existe → on va sur home
-          window.location.href = "home.html";
+          window.location.href = "/home";
         } else {
           // Pas encore de pseudo → choisir
-          window.location.href = "choose-username.html";
+          window.location.href = "/choose-username";
         }
       } catch (e) {
         console.error("Erreur Firestore :", e);

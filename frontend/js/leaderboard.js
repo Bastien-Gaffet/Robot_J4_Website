@@ -102,7 +102,7 @@ function renderPage() {
 
     row.style.cursor = "pointer";
     row.addEventListener("click", () => {
-      window.location.href = `profile.html?pseudo=${encodeURIComponent(entry.pseudo)}`;
+      window.location.href = `/profile?pseudo=${encodeURIComponent(entry.pseudo)}`;
     });
     
     tbody.appendChild(row);

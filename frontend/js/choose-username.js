@@ -83,7 +83,7 @@ submitBtn.addEventListener('click', async () => {
       draws: 0,
       claimed: true
     });
-    return window.location.href = 'home.html';
+    return window.location.href = '/home';
   }
 
   // Mode "claim"
@@ -107,7 +107,7 @@ submitBtn.addEventListener('click', async () => {
     });
     // 2) Supprimer l'ancien doc
     await deleteDoc(doc(db, "users", oldId));
-    return window.location.href = 'home.html';
+    return window.location.href = '/home';
   } else {
     return errorDiv.textContent = "Invalid claim token or already claimed.";
   }

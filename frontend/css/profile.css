@@ -41,3 +41,17 @@ canvas {
   justify-content: center;
   gap: 40px; 
 }
+
+@media (max-width: 768px) {
+  #mobileLogoutBtn {
+    display: block !important;
+    margin: 20px auto;
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+}

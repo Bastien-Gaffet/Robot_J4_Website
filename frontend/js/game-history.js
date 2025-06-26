@@ -126,12 +126,12 @@ function renderLeaderboard() {
     const date = data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
     const duration = (data.duration_seconds || 0).toFixed(1) + "s";
     const cells = [
-      `<a href="elo.html?pseudo=${encodeURIComponent(data.player_pseudo)}">${data.player_pseudo || "Anonymous"}</a>`,
+      `<a href="/profile?pseudo=${encodeURIComponent(data.player_pseudo)}">${data.player_pseudo || "Anonymous"}</a>`,
       date.toLocaleString(),
       duration,
       data.ai_depth || "N/A",
       data.winner || "N/A",
-      `<a href="replay.html?game_id=${data.game_id}" target="_blank">Replay</a>`
+      `<a href="/replay?game_id=${data.game_id}">Replay</a>`
     ];
 
     cells.forEach((html, i) => {

@@ -5,7 +5,7 @@ import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase
 onAuthStateChanged(auth, async (user) => {
   // 1) Pas connecté → login
   if (!user) {
-    return window.location.href = "login.html";
+    return window.location.href = "/login";
   }
 
   // 2) Récupérer le doc Firestore du user
@@ -16,7 +16,7 @@ onAuthStateChanged(auth, async (user) => {
 
     if (!userSnap.exists()) {
       // Pas encore de profil → choose pseudo
-      return window.location.href = "choose-username.html";
+      return window.location.href = "/choose-username";
     }
 
     // Profil trouvé, extraire pseudo + elo
@@ -38,29 +38,29 @@ onAuthStateChanged(auth, async (user) => {
   // 4) Mettre à jour la nav
   const navLinks = document.getElementById("nav-links");
   navLinks.innerHTML = `
-    <a href="index.html">Accueil</a>
-    <a href="profile.html?pseudo=${encodeURIComponent(pseudo)}">Profil</a>
-    <a href="leaderboard.html">Classement</a>
+    <a href="/">Accueil</a>
+    <a href="/profile?pseudo=${encodeURIComponent(pseudo)}">Profil</a>
+    <a href="/leaderboard">Classement</a>
     <a href="#" id="logoutBtn">Déconnexion</a>
   `;
 
   document.getElementById("logoutBtn").addEventListener("click", () => {
-    auth.signOut().then(() => window.location.href = "login.html");
+    auth.signOut().then(() => window.location.href = "/login");
   });
 });
 
 // Boutons d'action
 document.getElementById('btnProfile').addEventListener('click', () => {
   const pseudo = document.getElementById('userName').textContent;
-  window.location.href = `profile.html?pseudo=${encodeURIComponent(pseudo)}`;
+  window.location.href = `/profile?pseudo=${encodeURIComponent(pseudo)}`;
 });
 
 document.getElementById('btnPlayBot').addEventListener('click', () => {
   // Rediriger vers la page jeu vs bot
-  window.location.href = 'play-bot.html';
+  window.location.href = '/play-bot';
 });
 
 document.getElementById('btnPlayOnline').addEventListener('click', () => {
   // Rediriger vers la page jeu multijoueur (matchmaking)
-  window.location.href = 'play-online.html';
+  window.location.href = '/play-online';
 });
