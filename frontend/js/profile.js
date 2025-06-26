@@ -121,17 +121,3 @@ document.querySelectorAll(".filter-buttons button").forEach(button => {
 });
 
 loadPlayerData();
-
-
-const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
-
-if (mobileLogoutBtn) {
-  mobileLogoutBtn.addEventListener('click', () => {
-    signOut(auth).then(() => {
-      window.location.href = "/login";
-    }).catch(err => {
-      console.error("Erreur logout:", err);
-      alert("Erreur lors de la déconnexion");
-    });
-  });
-}

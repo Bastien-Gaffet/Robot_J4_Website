@@ -33,7 +33,7 @@ onAuthStateChanged(auth, async (user) => {
   // 3) Afficher pseudo + elo
   document.getElementById("userName").textContent    = pseudo;
   document.getElementById("profileInfo").textContent = 
-    elo !== null ? `Elo actuel : ${elo}` : "";
+    elo !== null ? `Rating : ${elo}` : "";
 
   // 4) Mettre à jour la nav
   const navLinks = document.getElementById("nav-links");

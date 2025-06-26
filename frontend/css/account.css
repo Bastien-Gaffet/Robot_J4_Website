@@ -1,0 +1,160 @@
+/* Conteneur général */
+wrapper {
+  display: block;
+  max-width: 700px;
+  margin: 6rem auto 3rem;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+wrapper h2 {
+  margin-top: 2rem;
+  text-align: center;
+  color: #004080;
+}
+
+/* Email affiché */
+wrapper p {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+/* Champs input */
+#pseudo {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.avatar-selection {
+  display: grid;
+  grid-template-columns: repeat(4, 64px);
+  gap: 10px;
+  justify-content: center;
+  margin: 1rem auto;
+}
+
+.avatar-selection img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.avatar-selection img:hover {
+  transform: scale(1.1);
+}
+
+.avatar-selection img.selected {
+  border-color: #007BFF;
+  box-shadow: 0 0 4px #007BFF;
+}
+
+/* Bouton */
+#save-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* Boutons */
+#save-btn,
+#delete-btn {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 1rem;
+}
+
+#save-btn {
+  background-color: #007BFF;
+  color: white;
+}
+
+#save-btn:hover {
+  background-color: #0056b3;
+}
+
+#delete-btn {
+  background-color: #da3636;
+  color: white;
+}
+
+#delete-btn:hover {
+  background-color: #b71c1c;
+}
+
+/* Confirmation popup */
+.confirm-popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.confirm-popup.show {
+  display: flex;
+}
+
+.confirm-popup-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.confirm-popup-content h3 {
+  margin-bottom: 1rem;
+}
+
+.confirm-popup-content button {
+  margin: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.confirm-popup-content input[type="text"] {
+  width: 100%;
+  padding: 0.6rem;
+  margin: 1rem 0;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.confirm-popup-content .confirm {
+  background-color: #c62828;
+  color: white;
+}
+
+.confirm-popup-content .cancel {
+  background-color: #ccc;
+  color: #333;
+}

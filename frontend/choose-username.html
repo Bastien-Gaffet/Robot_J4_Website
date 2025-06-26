@@ -19,6 +19,9 @@
     </div>
   </nav>
 
+  <!-- Mobile top-navigation bar -->
+  <div id="top-mobile-navbar" class="top-mobile-navbar"></div>
+
   <div class="container">
       <!-- Tabs -->
     <div class="tab-bar">
@@ -35,6 +38,12 @@
     <button id="submit-btn">Continue</button>
     <div id="error-message" class="error"></div>
   </div>
+
+  <h2>Select Your Avatar</h2>
+  <div class="avatar-selection" id="avatar-selection">
+    <!-- JS injectera les avatars ici -->
+  </div>
+  <input type="hidden" id="selected-avatar" />
 
   <script type="module" src="js/auth-guard.js"></script>
   <script type="module" src="js/choose-username.js"></script>

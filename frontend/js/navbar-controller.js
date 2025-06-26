@@ -11,12 +11,15 @@ import {
 onAuthStateChanged(auth, async user => {
   const isLoggedIn = !!user;
   let pseudo = null;
+  let avatar = "neutral.png";
 
   if (isLoggedIn) {
     try {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (userDoc.exists()) {
-        pseudo = userDoc.data().pseudo;
+        const data = userDoc.data();
+        pseudo = data.pseudo;
+        avatar = data.avatar || "neutral.png";
       }
     } catch (e) {
       console.error("Erreur récupération pseudo :", e);
@@ -29,21 +32,30 @@ onAuthStateChanged(auth, async user => {
   const pcNav = document.getElementById("nav-links");
   if (pcNav) {
     const playHref = isLoggedIn ? "/home" : "/login";
-    const profileHref = isLoggedIn ? `/profile?pseudo=${encodeURIComponent(pseudo)}` : "/login";
+    const accountHref = isLoggedIn ? `/account` : "/login";
 
     pcNav.innerHTML = `
-      <a href="/" class="nav-link">Home</a>
-      <a href="${playHref}" class="nav-link play-tab">Play</a>
-      <a href="/leaderboard" class="nav-link">Leaderboard</a>
-      <a href="/game-history" class="nav-link">History</a>
-      <a href="${profileHref}" class="nav-link">Profile</a>
+      <div class="nav-left">
+        <a href="/" class="nav-link">Home</a>
+        <a href="${playHref}" class="nav-link play-tab">Play</a>
+        <a href="/leaderboard" class="nav-link">Leaderboard</a>
+        <a href="/game-history" class="nav-link">History</a>
+      </div>
       ${isLoggedIn ? `
-        <a href="#" onclick="logout()" class="nav-link logout-btn" style="display: flex; align-items: center;">
-          <svg class="logout-icon" viewBox="0 0 24 24" width="20" height="20" style="vertical-align: middle; margin-right: 6px; fill: white;">
-            <path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-6V9a6 6 0 0 0-12 0h2a4 4 0 1 1 8 0v2H6v10h12V11h-2z" />
-          </svg>
-          Logout
-        </a>
+        <div class="nav-right">
+          <div class="nav-logo-pc">
+            <a href="${isLoggedIn ? `/profile?pseudo=${encodeURIComponent(pseudo)}` : '/login'}" class="pc-avatar-link" aria-label="Go to profile">
+              <img src="/images/avatars/${avatar}" alt="Avatar" class="pc-avatar-img" />
+            </a>
+          </div>  
+          <a href="${accountHref}" class="nav-link">Account</a>
+          <a href="#" onclick="logout()" class="nav-link logout-btn" style="display: flex; align-items: center;">
+            <svg class="logout-icon" viewBox="0 0 24 24" width="20" height="20" style="vertical-align: middle; margin-right: 6px; fill: white;">
+              <path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-6V9a6 6 0 0 0-12 0h2a4 4 0 1 1 8 0v2H6v10h12V11h-2z" />
+            </svg>
+            Logout
+          </a>
+        </div>
       ` : ""}
     `;
 
@@ -85,11 +97,40 @@ onAuthStateChanged(auth, async user => {
     });
   }
 
+    // --- Top Mobile Navbar ---
+  const topNav = document.getElementById("top-mobile-navbar");
+  if (topNav && currentPath !== "/") {
+    topNav.innerHTML = `
+      <div class="top-nav-inner">
+        <a href="${isLoggedIn ? `/profile?pseudo=${encodeURIComponent(pseudo)}` : '/login'}" class="avatar-container" aria-label="Go to profile">
+          <img src="/images/avatars/${avatar}" alt="Avatar" class="mobile-avatar" />
+        </a>
+        <span class="site-title">Connect4 J4</span>
+        ${isLoggedIn ? `
+        <div class="nav-right">
+          <a href="#" onclick="logout()" class="nav-link logout-btn" style="display: flex; align-items: center;">
+            <svg class="logout-icon" viewBox="0 0 24 24" width="20" height="20" style="vertical-align: middle; margin-right: 6px; fill: white;">
+              <path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-6V9a6 6 0 0 0-12 0h2a4 4 0 1 1 8 0v2H6v10h12V11h-2z" />
+            </svg>
+            Logout
+          </a>
+        </div>
+      ` : ""}
+    `;
+    if (!isLoggedIn) {
+      const title = topNav.querySelector(".site-title");
+      if (title) {
+        title.style.textAlign = "left";
+        title.style.marginLeft = "10rem";
+      }
+    }
+  }
+  
   // --- Bottom navbar mobile ---
   const bottomNav = document.querySelector('.bottom-nav');
   if (bottomNav) {
     const playHref = isLoggedIn ? "/home" : "/login";
-    const profileHref = isLoggedIn ? `/profile?pseudo=${encodeURIComponent(pseudo)}` : "/login";
+    const accountHref = isLoggedIn ? `/account` : "/login";
 
     bottomNav.innerHTML = `
       <a href="/" class="nav-item" aria-label="Home">
@@ -116,7 +157,7 @@ onAuthStateChanged(auth, async user => {
         </svg>
         <span class="label">History</span>
       </a>
-      <a href="${profileHref}" class="nav-item profile-tab" aria-label="Account">
+      <a href="${accountHref}" class="nav-item profile-tab" aria-label="Account">
         <svg class="icon" viewBox="0 0 24 24">
           <path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z"/>
         </svg>
