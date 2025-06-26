@@ -69,7 +69,7 @@ node_modules/
 .dataconnect
 
 #temporary files
-.tmp
+*.tmp
 
 #Five Server
 .fiveserverrc.json
