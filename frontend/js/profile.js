@@ -3,6 +3,8 @@ import {
   collection, getDocs,
   query, orderBy, where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth } from './firebase-init.js';  // Assure-toi d'importer auth
+import { signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const urlParams = new URLSearchParams(window.location.search);
 const pseudo = urlParams.get("pseudo");
@@ -119,3 +121,17 @@ document.querySelectorAll(".filter-buttons button").forEach(button => {
 });
 
 loadPlayerData();
+
+
+const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+
+if (mobileLogoutBtn) {
+  mobileLogoutBtn.addEventListener('click', () => {
+    signOut(auth).then(() => {
+      window.location.href = "/login";
+    }).catch(err => {
+      console.error("Erreur logout:", err);
+      alert("Erreur lors de la déconnexion");
+    });
+  });
+}

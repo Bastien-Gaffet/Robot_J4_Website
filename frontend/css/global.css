@@ -68,6 +68,37 @@ body {
   background-color: #0066cc;
 }
 
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+  padding: 8px 14px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.2s, transform 0.1s ease;
+}
+
+.logout-btn:hover {
+  background-color: #0066cc;
+}
+
+.logout-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 0 12px 4px rgba(0, 123, 255, 0.5); /* effet lumineux */
+}
+
+.logout-icon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+
 /* Cache la navbar quand on scroll vers le bas */
 .hide-nav {
   transform: translateY(-100%);

@@ -22,6 +22,9 @@
     </nav>
 
     <h1 id="playerName">Profile Player1</h1>
+    
+    <!-- Bouton Logout visible uniquement sur mobile -->
+    <button id="mobileLogoutBtn" style="display:none;">Logout</button>
 
     <div class="filter-buttons">
       <button data-range="7">7 days</button>
@@ -38,49 +41,15 @@
 
     <canvas id="eloChart" width="1000" height="500"></canvas>
   </div>
+
   <script type="module" src="js/profile.js"></script>
 
-      <!-- Back to Top Button -->
-    <button id="backtotopBtn" title="Back to top">↑</button>
-    <script src="js/global.js"></script>
-    
-    <!-- Bottom Navigation Bar pour mobile -->
-    <nav class="bottom-nav">
-      <a href="/" class="nav-item" aria-label="Home">
-        <svg class="icon" viewBox="0 0 24 24">
-          <path d="M3 12l9-9 9 9v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1v-9z"/>
-        </svg>
-        <span class="label">Home</span>
-      </a>
-      <!-- Bottom Navigation Bar pour mobile -->       
-      <a href="#" class="nav-item play-tab" aria-label="Play">
-        <svg class="icon" viewBox="0 0 24 24">
-          <path d="M8 5v14l11-7z"/>
-        </svg>
-        <span class="label">Play</span>
-      </a>
-
-      <a href="/leaderboard" class="nav-item" aria-label="Leaderboard">
-        <svg class="icon" viewBox="0 0 24 24">
-          <path d="M4 22h16v-2H4v2zm0-6h10v-2H4v2zm0-6h7V8H4v2zm0-6v2h4V4H4z"/>
-        </svg>
-        <span class="label">Stats</span>
-      </a>
-
-      <a href="/game-history" class="nav-item" aria-label="History">
-        <svg class="icon" viewBox="0 0 24 24">
-          <path d="M13 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-7-7V3zm-1 5h2v6l5.25 3.15-1 1.65L11 14V8z"/>
-        </svg>
-        <span class="label">History</span>
-      </a>
-
-      <a href="#" class="nav-item profile-tab" aria-label="Account">
-        <svg class="icon" viewBox="0 0 24 24">
-          <path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z"/>
-        </svg>
-        <span class="label">Account</span>
-      </a>
-    </nav>
-    <script type="module" src="/js/navbar-controller.js"></script>
+  <!-- Back to Top Button -->
+  <button id="backtotopBtn" title="Back to top">↑</button>
+  <script src="js/global.js"></script>
+  
+  <!-- Bottom Navigation Bar pour mobile -->
+  <nav class="bottom-nav"></nav>
+  <script type="module" src="/js/navbar-controller.js"></script>
 </body>
 </html>
