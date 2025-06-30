@@ -1,0 +1,122 @@
+
+/* --- css/multiplayer.css --- */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f4f4f4;
+  text-align: center;
+  color: #222;
+}
+
+#grid {
+  display: grid;
+  grid-template-rows: repeat(6, 60px);
+  grid-template-columns: repeat(7, 60px);
+  gap: 5px;
+  margin: 20px auto;
+  background: #0077cc;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.cell {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #e0e0e0;
+}
+
+.cell.red {
+  background: red;
+}
+
+.cell.yellow {
+  background: gold;
+}
+
+.cell.last-move {
+  box-shadow: 0 0 10px 3px #00f inset;
+}
+
+.player-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 10px;
+}
+
+.avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+}
+
+.pseudo {
+  font-weight: bold;
+  margin: 0;
+}
+
+.elo, .timer {
+  margin: 2px 0;
+  font-size: 14px;
+}
+
+.hidden {
+  display: none;
+}
+
+#loading-screen {
+  margin-top: 100px;
+}
+
+.loader {
+  position: relative;
+  width: 120px;
+  height: 90px;
+  margin: 0 auto;
+}
+.loader:before {
+  content: "";
+  position: absolute;
+  bottom: 10px;
+  left: 50px;
+  height: 30px;
+  width: 30px;
+  border-radius: 50%;
+  background: #004080;
+  animation: loading-bounce 0.5s ease-in-out infinite alternate;
+}
+.loader:after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 7px;
+  width: 45px;
+  border-radius: 4px;
+  box-shadow: 0 5px 0 #fff, -35px 50px 0 #fff, -70px 95px 0 #fff;
+  animation: loading-step 1s ease-in-out infinite;
+}
+
+@keyframes loading-bounce {
+  0% { transform: scale(1, 0.7); }
+  40% { transform: scale(0.8, 1.2); }
+  60% { transform: scale(1, 1); }
+  100% { bottom: 140px; }
+}
+
+@keyframes loading-step {
+  0% {
+    box-shadow: 0 10px 0 rgba(0,0,0,0),
+                0 10px 0 #000,
+                -35px 50px 0 #000,
+                -70px 90px 0 #000;
+  }
+  100% {
+    box-shadow: 0 10px 0 #000,
+                -35px 50px 0 #000,
+                -70px 90px 0 #000,
+                -70px 90px 0 rgba(0,0,0,0);
+  }
+}

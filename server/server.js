@@ -1,125 +1,163 @@
-// === server.js ===
-const WebSocket = require("ws");
+// server.js
+import express from "express";
+import { WebSocketServer } from "ws";
+import http from "http";
+import cors from "cors";
+import dotenv from "dotenv";
+import { initializeApp, applicationDefault } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 
-// Écouter le port fourni par Render ou par défaut 8080
-const port = process.env.PORT || 8080;
-const server = new WebSocket.Server({ port });
-console.log(`WebSocket server listening on port ${port}`);
+dotenv.config();
 
-let waitingPlayer = null;
-let games = new Map(); // Map<GameID, { players: [ws1, ws2], grid, currentPlayer }>
+// Initialize Firebase
+initializeApp({ credential: applicationDefault() });
+const db = getFirestore();
 
-function createEmptyGrid() {
-  return Array.from({ length: 6 }, () => Array(7).fill(0));
+const app = express();
+app.use(cors());
+
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
+
+const players = new Map();
+const waitingPlayers = [];
+const ongoingGames = new Map();
+
+function generateGameId() {
+  return Math.random().toString(36).substring(2, 10);
 }
 
-function checkVictory(grid, player) {
+function calculateK(numGames) {
+  return Math.max(10, 40 - ((numGames / 12) * 30));
+}
+
+function expectedScore(eloA, eloB) {
+  return 1 / (1 + 10 ** ((eloB - eloA) / 400));
+}
+
+function updateElo(eloA, eloB, resultA, k) {
+  const expectedA = expectedScore(eloA, eloB);
+  const newA = eloA + k * (resultA - expectedA);
+  const newB = eloB + k * ((1 - resultA) - (1 - expectedA));
+  return [Math.round(Math.max(newA, 100)), Math.round(Math.max(newB, 100))];
+}
+
+function checkWinner(board) {
   const directions = [
     [0, 1], [1, 0], [1, 1], [1, -1]
   ];
   for (let r = 0; r < 6; r++) {
     for (let c = 0; c < 7; c++) {
-      if (grid[r][c] !== player) continue;
-      for (const [dr, dc] of directions) {
-        let count = 1;
-        for (let i = 1; i < 4; i++) {
-          const nr = r + dr * i;
-          const nc = c + dc * i;
-          if (nr < 0 || nr >= 6 || nc < 0 || nc >= 7 || grid[nr][nc] !== player) break;
+      const player = board[r][c];
+      if (player === 0) continue;
+      for (let [dr, dc] of directions) {
+        let count = 0;
+        for (let i = 0; i < 4; i++) {
+          const nr = r + i * dr, nc = c + i * dc;
+          if (nr < 0 || nr >= 6 || nc < 0 || nc >= 7 || board[nr][nc] !== player) break;
           count++;
         }
-        if (count === 4) return true;
+        if (count === 4) return player;
       }
     }
   }
-  return false;
+  return 0;
 }
 
-function send(ws, data) {
-  if (ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(data));
+function findMatch(player) {
+  if (waitingPlayers.length === 0) {
+    waitingPlayers.push(player);
+    return;
   }
+  waitingPlayers.sort((a, b) => Math.abs(player.elo - a.elo) - Math.abs(player.elo - b.elo));
+  const opponent = waitingPlayers.shift();
+  if (opponent.uid === player.uid) {
+    waitingPlayers.unshift(opponent);
+    return;
+  }
+  const gameId = generateGameId();
+  const red = Math.random() < 0.5 ? player : opponent;
+  const yellow = red === player ? opponent : player;
+  red.ws.send(JSON.stringify({ type: "start_game", color: "red", opponent: yellow, game_id: gameId, isYourTurn: true }));
+  yellow.ws.send(JSON.stringify({ type: "start_game", color: "yellow", opponent: red, game_id: gameId, isYourTurn: false }));
+  ongoingGames.set(gameId, {
+    players: { red, yellow },
+    board: Array.from({ length: 6 }, () => Array(7).fill(0)),
+    turn: "red",
+    moves: [],
+    start: Date.now(),
+    first: red.uid,
+  });
 }
 
-server.on("connection", (ws) => {
-  console.log('New client connected');
+function handleMove(ws, data) {
+  const game = ongoingGames.get(data.game_id);
+  if (!game || game.turn !== data.color) return;
+  const col = data.column;
+  const board = game.board;
+  let rowPlayed = -1;
+  for (let r = 5; r >= 0; r--) {
+    if (board[r][col] === 0) {
+      board[r][col] = data.color === "red" ? 1 : 2;
+      rowPlayed = r;
+      break;
+    }
+  }
+  if (rowPlayed === -1) return;
+  game.moves.push(col);
+  const winner = checkWinner(board);
+  const full = board.every(row => row.every(cell => cell !== 0));
 
-  // Si on n'attend personne, ce WS devient le joueur en attente
-  if (waitingPlayer === null) {
-    waitingPlayer = ws;
-    send(ws, { type: "waiting" });
+  if (winner || full) {
+    const result = winner === 1 ? "red" : winner === 2 ? "yellow" : "draw";
+    const { red, yellow } = game.players;
+    red.ws.send(JSON.stringify({ type: "game_over", result, moves: game.moves, red, yellow, first: game.first }));
+    yellow.ws.send(JSON.stringify({ type: "game_over", result, moves: game.moves, red, yellow, first: game.first }));
+    ongoingGames.delete(data.game_id);
   } else {
-    // On crée une nouvelle partie
-    const gameId = Math.random().toString(36).substr(2, 6);
-    const grid = createEmptyGrid();
-    const players = [waitingPlayer, ws];
-    let currentPlayer = 1;
-    games.set(gameId, { players, grid, currentPlayer });
-
-    // Envoyer le début de partie aux deux joueurs
-    players.forEach((p, idx) => {
-      send(p, {
-        type: "start",
-        gameId,
-        playerNumber: idx + 1,
-      });
-    });
-    waitingPlayer = null;
-
-    // Gestion des messages pour cette partie
-    players.forEach((p) => {
-      p.on("message", (msg) => {
-        try {
-          const data = JSON.parse(msg);
-          if (data.type === "move") {
-            const game = games.get(gameId);
-            if (!game || game.currentPlayer !== data.player) return;
-
-            // Calcul de la ligne où tomberait le jeton
-            const col = data.column;
-            const rowIdx = game.grid.slice().reverse().findIndex(row => row[col] === 0);
-            if (rowIdx === -1) return;
-            const actualRow = 5 - rowIdx;
-            game.grid[actualRow][col] = data.player;
-
-            const victory = checkVictory(game.grid, data.player);
-
-            // Envoyer le coup et état à tous les clients
-            game.players.forEach(client => {
-              send(client, {
-                type: "move",
-                column: col,
-                row: actualRow,
-                player: data.player,
-                victory
-              });
-            });
-
-            // Si pas de victoire, on change de joueur
-            if (!victory) game.currentPlayer = 3 - game.currentPlayer;
-          }
-        } catch (e) {
-          console.error('Invalid message', e);
-        }
-      });
-
-      // Gérer la déconnexion d'un joueur
-      p.on("close", () => {
-        console.log('Client disconnected');
-        // Si c'était le joueur en attente
-        if (waitingPlayer === p) waitingPlayer = null;
-
-        // Si partie en cours, prévenir l'autre
-        const game = Array.from(games.entries()).find(([id, g]) => g.players.includes(p));
-        if (game) {
-          const [id, g] = game;
-          const other = g.players.find(x => x !== p);
-          if (other && other.readyState === WebSocket.OPEN) {
-            send(other, { type: "opponent_left" });
-          }
-          games.delete(id);
-        }
-      });
-    });
+    game.turn = game.turn === "red" ? "yellow" : "red";
+    game.players.red.ws.send(JSON.stringify({ type: "move", column: col, color: data.color, nextTurn: game.players[game.turn].uid }));
+    game.players.yellow.ws.send(JSON.stringify({ type: "move", column: col, color: data.color, nextTurn: game.players[game.turn].uid }));
   }
+}
+
+wss.on("connection", (ws) => {
+  ws.on("message", async (message) => {
+    try {
+      const data = JSON.parse(message);
+      if (data.type === "matchmaking") {
+        const userSnap = await db.collection("users").doc(data.uid).get();
+        if (!userSnap.exists) return;
+        const user = userSnap.data();
+        const player = {
+          ws,
+          uid: data.uid,
+          pseudo: data.pseudo,
+          avatar: data.avatar,
+          elo: user.elo || 500
+        };
+        players.set(data.uid, player);
+        findMatch(player);
+      }
+      if (data.type === "play") {
+        handleMove(ws, data);
+      }
+    } catch (err) {
+      console.error("Invalid message:", message);
+    }
+  });
+
+  ws.on("close", () => {
+    for (const [uid, player] of players.entries()) {
+      if (player.ws === ws) {
+        players.delete(uid);
+        break;
+      }
+    }
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log("WebSocket server running on port", PORT);
 });

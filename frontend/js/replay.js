@@ -14,6 +14,7 @@ let buffers = [];
 let victoryBuffer = null;
 let secretVictoryBuffer = null;
 let defeatBuffer = null;
+let drawBuffer = null;
 
 async function loadSounds() {
   const jetonFiles = ["sounds/jeton1.mp3", "sounds/jeton2.mp3"];
@@ -40,6 +41,10 @@ async function loadSounds() {
   const defeatResponse = await fetch("sounds/defeat.mp3");
   const defeatArrayBuffer = await defeatResponse.arrayBuffer();
   defeatBuffer = await audioContext.decodeAudioData(defeatArrayBuffer);
+  // Son de draw
+  const drawResponse = await fetch("sounds/draw.mp3");
+  const drawArrayBuffer = await drawResponse.arrayBuffer();
+  drawBuffer = await audioContext.decodeAudioData(drawArrayBuffer);
 }
 
 function playRandomCoinSound() {
@@ -56,10 +61,12 @@ function playRandomCoinSound() {
   source.start();
 }
 
-function playEndSound(isPlayerWinner) {
+function playEndSound(winner) {
   let bufferToPlay = null;
 
-  if (isPlayerWinner) {
+  if (winner === "draw" && drawBuffer) {
+    bufferToPlay = drawBuffer;
+  } else if (winner && victoryBuffer) {
     // 1 chance sur 100 : son spécial
     if (secretVictoryBuffer && Math.random() < 0.01) {
       bufferToPlay = secretVictoryBuffer;
@@ -78,6 +85,15 @@ function playEndSound(isPlayerWinner) {
     source.connect(audioContext.destination);
     source.start();
   }
+}
+
+
+function isGridFull() {
+  return grid.every(row => row.every(cell => cell !== 0));
+}
+
+function isDraw() {
+  return isGridFull() && winningCells.length === 0;
 }
 
 async function main() {
@@ -170,7 +186,18 @@ async function main() {
     hideGridMessage();
 
     const data = gameDoc.data();
-    const firstPlayer = data.first_player || 1;
+    const player1 = data.player1;
+    const player2 = data.player2;
+    const winnerPseudo = data.result;
+    const firstPlayerColor = data.first_player_color || "red";
+    const firstPlayer = (firstPlayerColor === "red") ? 1 : 2;
+    const redPlayer = (firstPlayerColor === "red") ? player1 : player2;
+    const yellowPlayer = (firstPlayerColor === "yellow") ? player1 : player2;
+
+    // Afficher les pseudos dans les éléments HTML
+    document.getElementById("red-player-name").textContent = redPlayer;
+    document.getElementById("yellow-player-name").textContent = yellowPlayer;
+    
     const moves = data.moves || [];
     let currentMove = 0;
     let isPlaying = false;
@@ -234,7 +261,7 @@ async function main() {
 
             if (cells.length === 4) {
               winningCells = cells;
-              endReached = true; // ✅ On marque la fin
+              endReached = true; // On marque la fin
               setTimeout(renderGrid, 200);
               return;
             }
@@ -244,17 +271,21 @@ async function main() {
     }
 
     function getWinnerText() {
-      const winnerColor = (currentMove % 2 === 0 ? firstPlayer : (firstPlayer === 1 ? 2 : 1));
-      return winnerColor === 1 ? "Yellow (Player)" : "Red (Algorithm)";
+      const winner = data.result;
+
+      if (winner === "draw") return "Draw!";
+      if (winner === data.player1) return `${data.player1} wins!`;
+      if (winner === data.player2) return `${data.player2} wins!`;
+
+      return "Unknown result";
     }
 
-    function showPopup(message) {
+    function showPopup(message, isDraw = false) {
       const popup = document.getElementById("popup");
       const popupMessage = document.getElementById("popup-message");
 
       setTimeout(() => {
-        const isPlayerWinner = ((currentMove - 1) % 2 === 0) === (firstPlayer === 2);
-        playEndSound(isPlayerWinner);
+        playEndSound(winnerPseudo);
       }, 200);
 
       setTimeout(() => {
@@ -298,8 +329,10 @@ async function main() {
               isPlaying = false;
               playPauseImg.src = "images/svg/play.svg";
               playPauseImg.alt = "Play";
-              showPopup(getWinnerText() + " wins!");
               highlightWinningCells();
+              if (winningCells.length > 0) {
+                showPopup(getWinnerText());
+              }
             }
           }
         }, 700);
@@ -352,8 +385,10 @@ async function main() {
           isPlaying = false;
           playPauseImg.src = "images/svg/play.svg";
           playPauseImg.alt = "Play";
-          showPopup(getWinnerText() + " wins!");
           highlightWinningCells();
+          if (winningCells.length > 0) {
+            showPopup(getWinnerText());
+          }
         }
       }
     });
@@ -382,14 +417,17 @@ async function main() {
       isPlaying = false;
       playPauseImg.src = "images/svg/play.svg";
       playPauseImg.alt = "Play";
+      playRandomCoinSound();
       renderGrid();
       updateButtons();
-      showPopup(getWinnerText() + " wins!");
       highlightWinningCells();
+      if (winningCells.length > 0) {
+        showPopup(getWinnerText());
+      }      
     });
 
     document.getElementById("popup-close").addEventListener("click", () => {
-      document.getElementById("popup").classList.add("hidden");
+    document.getElementById("popup").classList.add("hidden");
     });
 
   } catch (error) {

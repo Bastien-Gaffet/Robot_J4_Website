@@ -17,6 +17,8 @@
       { "source": "/choose-username*", "destination": "/choose-username.html" },
       { "source": "/game-history*", "destination": "/game-history.html" },
       { "source": "/account", "destination": "/account.html" },
+      { "source": "/play-online*", "destination": "/play-online.html" },
+      { "source": "/play-bot", "destination": "/play-bot.html" },
       { "source": "/404", "destination": "/404.html" }
     ]
   }

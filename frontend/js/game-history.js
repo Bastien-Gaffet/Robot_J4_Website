@@ -113,7 +113,7 @@ function renderLeaderboard() {
   tbody.innerHTML = "";
 
   if (filteredData.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6">No games found</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5">No games found</td></tr>`;
     document.getElementById("pagination").innerHTML = "";
     return;
   }
@@ -123,22 +123,79 @@ function renderLeaderboard() {
 
   pageData.forEach(data => {
     const row = document.createElement("tr");
-    const date = data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
-    const duration = (data.duration_seconds || 0).toFixed(1) + "s";
-    const cells = [
-      `<a href="/profile?pseudo=${encodeURIComponent(data.player_pseudo)}">${data.player_pseudo || "Anonymous"}</a>`,
-      date.toLocaleString(),
-      duration,
-      data.ai_depth || "N/A",
-      data.winner || "N/A",
-      `<a href="/replay?game_id=${data.game_id}">Replay</a>`
-    ];
+    row.classList.add("clickable-row");
 
-    cells.forEach((html, i) => {
-      const td = document.createElement("td");
-      td.setAttribute("data-label", ["Username", "Date", "Duration", "AI Level", "Winner", "Replay"][i]);
-      td.innerHTML = html;
-      row.appendChild(td);
+    const dateObj = data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+    const date = dateObj.toLocaleDateString();
+    const duration = (data.duration_seconds || 0).toFixed(1) + "s";
+    const moves = Array.isArray(data.moves) ? data.moves.length : "N/A";
+
+    const p1 = data.player1;
+    const p2 = data.player2;
+    const result = data.result;
+
+    const isP1Winner = result === p1;
+    const isP2Winner = result === p2;
+    const isDraw = result === "draw";
+
+    let p1Class = "player-loss";
+    let p2Class = "player-loss";
+    let p1Score = "0";
+    let p2Score = "0";
+
+    if (isDraw) {
+      p1Class = p2Class = "player-draw";
+      p1Score = p2Score = "½";
+    } else if (isP1Winner) {
+      p1Class = "player-win";
+      p2Class = "player-loss";
+      p1Score = "1";
+      p2Score = "0";
+    } else if (isP2Winner) {
+      p1Class = "player-loss";
+      p2Class = "player-win";
+      p1Score = "0";
+      p2Score = "1";
+    }
+
+    const playerTd = document.createElement("td");
+    playerTd.classList.add("player-cell");
+    playerTd.setAttribute("data-label", "Players");
+    playerTd.innerHTML = `
+      <a href="/profile?pseudo=${encodeURIComponent(p1)}" class="${p1Class}">${p1}</a><br>
+      <a href="/profile?pseudo=${encodeURIComponent(p2)}" class="${p2Class}">${p2}</a>
+    `;
+
+    const movesTd = document.createElement("td");
+    movesTd.setAttribute("data-label", "Moves");
+    movesTd.textContent = moves;
+
+    const durationTd = document.createElement("td");
+    durationTd.setAttribute("data-label", "Duration");
+    durationTd.textContent = duration;
+
+    const dateTd = document.createElement("td");
+    dateTd.setAttribute("data-label", "Date");
+    dateTd.textContent = date;
+
+    const resultTd = document.createElement("td");
+    resultTd.setAttribute("data-label", "Result");
+    resultTd.innerHTML = `
+      <div style="line-height: 1.2">
+        <div>${p1Score}</div>
+        <div>${p2Score}</div>
+      </div>
+    `;
+
+    // Ajout des cellules à la ligne
+    row.appendChild(playerTd);
+    row.appendChild(resultTd);
+    row.appendChild(movesTd);
+    row.appendChild(durationTd);
+    row.appendChild(dateTd);
+
+    row.addEventListener("click", () => {
+      window.location.href = `/replay?game_id=${encodeURIComponent(data.game_id)}`;
     });
 
     tbody.appendChild(row);
@@ -148,36 +205,6 @@ function renderLeaderboard() {
   renderPaginationControls();
 }
 
-function setupSorting() {
-  const ths = document.querySelectorAll("#leaderboard th[data-key]");
-  ths.forEach(th => {
-    const key = th.dataset.key;
-
-    th.addEventListener("click", () => {
-      const currentOrder = th.classList.contains("sort-asc") ? "asc"
-                         : th.classList.contains("sort-desc") ? "desc"
-                         : null;
-
-      const newOrder = currentOrder === "asc" ? "desc" : "asc";
-      currentSort = { key, order: newOrder };
-      currentPage = 1;
-
-      // Reset tous les autres headers
-      ths.forEach(otherTh => {
-        otherTh.classList.remove("sort-asc", "sort-desc");
-        const icon = otherTh.querySelector(".sort-icon");
-        if (icon) icon.src = "images/svg/sort-neutral.svg";
-      });
-
-      // Appliquer nouvelle classe & icône
-      th.classList.add(`sort-${newOrder}`);
-      const icon = th.querySelector(".sort-icon");
-      if (icon) icon.src = `images/svg/sort-${newOrder === "asc" ? "up" : "down"}.svg`;
-
-      applyFilterAndSort();
-    });
-  });
-}
 
 function renderPaginationControls() {
   const container = document.getElementById("pagination");
@@ -229,4 +256,35 @@ function renderPaginationControls() {
 
   container.appendChild(createBtn("›", currentPage + 1, currentPage === totalPages));
   container.appendChild(createBtn("Last", totalPages, currentPage === totalPages));
+}
+
+function setupSorting() {
+  const ths = document.querySelectorAll("#leaderboard th[data-key]");
+  ths.forEach(th => {
+    const key = th.dataset.key;
+
+    th.addEventListener("click", () => {
+      const currentOrder = th.classList.contains("sort-asc") ? "asc"
+                           : th.classList.contains("sort-desc") ? "desc"
+                           : null;
+
+      const newOrder = currentOrder === "asc" ? "desc" : "asc";
+      currentSort = { key, order: newOrder };
+      currentPage = 1;
+
+      // Reset tous les autres headers
+      ths.forEach(otherTh => {
+        otherTh.classList.remove("sort-asc", "sort-desc");
+        const icon = otherTh.querySelector(".sort-icon");
+        if (icon) icon.src = "images/svg/sort-neutral.svg";
+      });
+
+      // Appliquer nouvelle classe & icône
+      th.classList.add(`sort-${newOrder}`);
+      const icon = th.querySelector(".sort-icon");
+      if (icon) icon.src = `images/svg/sort-${newOrder === "asc" ? "up" : "down"}.svg`;
+
+      applyFilterAndSort();
+    });
+  });
 }

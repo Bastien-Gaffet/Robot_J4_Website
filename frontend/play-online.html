@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Partie Multijoueur</title>
+  <link rel="stylesheet" href="css/multiplayer.css" />
+</head>
+<body>
+  <div id="loading-screen">
+    <span class="loader"></span>
+    <p>Recherche d'un adversaire en cours...</p>
+  </div>
+
+  <div id="game-container" class="hidden">
+    <div id="opponent-info" class="player-info">
+      <img id="opponent-avatar" src="" alt="Avatar adversaire" class="avatar" />
+      <div>
+        <p id="opponent-pseudo" class="pseudo">Adversaire</p>
+        <p id="opponent-elo" class="elo">ELO: ???</p>
+        <p id="opponent-timer" class="timer">5:00</p>
+      </div>
+    </div>
+
+    <div id="grid"></div>
+
+    <div id="your-info" class="player-info">
+      <img id="your-avatar" src="" alt="Votre avatar" class="avatar" />
+      <div>
+        <p id="your-pseudo" class="pseudo">Vous</p>
+        <p id="your-elo" class="elo">ELO: ???</p>
+        <p id="your-timer" class="timer">5:00</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/multiplayer.js"></script>
+</body>
+</html>
+
