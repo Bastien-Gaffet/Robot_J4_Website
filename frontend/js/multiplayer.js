@@ -2,7 +2,7 @@
 import { db } from "./firebase-init.js";
 import { doc, setDoc, updateDoc, getDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const socket = new WebSocket("wss://your-render-websocket-url.onrender.com");
+const socket = new WebSocket("wss://connect4-server-mfwo.onrender.com/");
 const uid = localStorage.getItem("uid");
 const pseudo = localStorage.getItem("pseudo");
 const avatar = localStorage.getItem("avatar_url");

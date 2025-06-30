@@ -124,7 +124,9 @@ function handleMove(ws, data) {
 wss.on("connection", (ws) => {
   ws.on("message", async (message) => {
     try {
-      const data = JSON.parse(message);
+      // Convertir le buffer en string avant le JSON.parse
+      const data = JSON.parse(message.toString());
+
       if (data.type === "matchmaking") {
         const userSnap = await db.collection("users").doc(data.uid).get();
         if (!userSnap.exists) return;
@@ -139,9 +141,11 @@ wss.on("connection", (ws) => {
         players.set(data.uid, player);
         findMatch(player);
       }
+
       if (data.type === "play") {
         handleMove(ws, data);
       }
+
     } catch (err) {
       console.error("Invalid message:", message);
     }
