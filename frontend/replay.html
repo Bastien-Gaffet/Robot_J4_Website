@@ -21,33 +21,32 @@
 
   <!-- Mobile top-navigation bar -->
   <div id="top-mobile-navbar" class="top-mobile-navbar"></div>
-
   <h1>Game Replay Visualization</h1>
   <p id="grid-message" class="grid-message hidden">Aucune partie spécifiée</p>
-  <div id="replay-container" class="replay-container">
     <div id="players-display">
-      <span class="red">🔴 <span id="red-player-name"></span></span> vs 
-      <span class="yellow">🟡 <span id="yellow-player-name"></span></span>
-    </div>
-  <div id="grid"></div>
+    <span class="red">🔴 <span id="red-player-name"></span></span> vs 
+    <span class="yellow">🟡 <span id="yellow-player-name"></span></span>
   </div>
-
-  <div id="controls">
-    <button id="rewind" aria-label="Rewind">
-      <img src="images/svg/arrow-left-double.svg" alt="Rewind">
-    </button>
-    <button id="previous" aria-label="Previous">
-      <img src="images/svg/arrow-left.svg" alt="Previous">
-    </button>
-    <button id="playpause" aria-label="Play/Pause">
-      <img id="playpause-img" src="images/svg/play.svg" alt="Play">
-    </button>
-    <button id="next" aria-label="Next">
-      <img src="images/svg/arrow-right.svg" alt="Next">
-    </button>
-    <button id="end" aria-label="End">
-      <img src="images/svg/arrow-right-double.svg" alt="End">
-    </button>
+  <div id="replay-container" class="replay-container">
+    <div id="centered-block">
+    <div id="grid"></div>
+      <div id="controls">
+      <button id="rewind" aria-label="Rewind">
+        <img src="images/svg/arrow-left-double.svg" alt="Rewind">
+      </button>
+      <button id="previous" aria-label="Previous">
+        <img src="images/svg/arrow-left.svg" alt="Previous">
+      </button>
+      <button id="playpause" aria-label="Play/Pause">
+        <img id="playpause-img" src="images/svg/play.svg" alt="Play">
+      </button>
+      <button id="next" aria-label="Next">
+        <img src="images/svg/arrow-right.svg" alt="Next">
+      </button>
+      <button id="end" aria-label="End">
+        <img src="images/svg/arrow-right-double.svg" alt="End">
+      </button>
+    </div>
   </div>
 
   <!-- Popup personnalisé -->

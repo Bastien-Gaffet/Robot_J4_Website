@@ -332,6 +332,8 @@ async function main() {
               highlightWinningCells();
               if (winningCells.length > 0) {
                 showPopup(getWinnerText());
+              } else if (isDraw()) {
+                showPopup("Draw!", true);
               }
             }
           }
@@ -385,9 +387,10 @@ async function main() {
           isPlaying = false;
           playPauseImg.src = "images/svg/play.svg";
           playPauseImg.alt = "Play";
-          highlightWinningCells();
           if (winningCells.length > 0) {
             showPopup(getWinnerText());
+          } else if (isDraw()) {
+            showPopup("Draw!", true);
           }
         }
       }
@@ -423,7 +426,9 @@ async function main() {
       highlightWinningCells();
       if (winningCells.length > 0) {
         showPopup(getWinnerText());
-      }      
+      } else if (isDraw()) {
+        showPopup("Draw!", true);
+      }   
     });
 
     document.getElementById("popup-close").addEventListener("click", () => {

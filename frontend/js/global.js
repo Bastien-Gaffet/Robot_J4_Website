@@ -1,7 +1,8 @@
 //source code javascript
 //scripts.js
 document.addEventListener("DOMContentLoaded", function () {
-    var nav = document.querySelector("nav");
+    var nav = document.querySelector(".navbar");
+    var topMobileNav = document.querySelector(".top-mobile-navbar");
     var footer = document.querySelector("footer");
     var lastScrollTop = 0;
     var scrollThreshold = 300; // Nombre de pixels apres lequel les barres disparaissent
@@ -12,15 +13,17 @@ document.addEventListener("DOMContentLoaded", function () {
         if (scrollTop > lastScrollTop) {
             // Defilement vers le bas
             nav.classList.add("hide-nav");
+            topMobileNav.classList.add("hide-nav");
         } else {
             // Defilement vers le haut
             nav.classList.remove("hide-nav");
+            topMobileNav.classList.remove("hide-nav");
         }
     } else {
         // En haut de la page ou avant d'atteindre le seuil
         nav.classList.remove("hide-nav");
-        }
-
+        topMobileNav.classList.remove("hide-nav");
+    }
         lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; // Pour les appareils mobiles ou pour eviter les valeurs negatives
     });
 });

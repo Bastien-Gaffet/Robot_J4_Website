@@ -304,13 +304,18 @@ footer {
   left: 0;
   right: 0;
   z-index: 999;
-  display: flex;
   align-items: center;
   justify-content: space-between;
+  transition: transform 0.3s ease;
 }
 
 body.no-top-padding .top-mobile-navbar {
   display: none !important;
+}
+
+.top-mobile-navbar.hide-nav {
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
 }
 
 .top-nav-inner {
