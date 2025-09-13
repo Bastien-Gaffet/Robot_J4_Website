@@ -143,6 +143,33 @@ table tr:last-child td:last-child {
     font-weight: bold;
     color: #007BFF;
   }
+
+  .player-cell {
+    align-items: stretch; /* Pour que la div enfant prenne la largeur */
+  }
+
+  .player-cell .player-names {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* Les deux pseudos seront alignés à droite */
+    width: 100%;
+  }
+
+  .player-cell .player-names a {
+    text-align: right;
+  }
+
+  .player-cell .player-names a:not(:last-child) {
+    margin-bottom: 10px; /* Ajuste la valeur à ta convenance */
+  }
+
+  td[data-label="Players"] {
+    justify-content: flex-start; /* aligne à gauche le bloc principal */
+  }
+
+  td[data-label="Players"]::before {
+    margin-right: auto; /* pousse le libellé à gauche */
+  }
 }
 
 .sort-icon {
@@ -168,12 +195,6 @@ th.sort-desc .sort-icon {
 
 .clickable-row {
   cursor: pointer;
-}
-
-@media (max-width: 768px) {
-  .player-cell {
-    align-items: flex-start;
-  }
 }
 
 #leaderboard a.player-win {

@@ -87,15 +87,25 @@ function applyFilterAndSort() {
   if (currentSort.key) {
     const { key, order } = currentSort;
     filteredData.sort((a, b) => {
-      let aVal = key === "timestamp"
-        ? (a[key]?.toDate ? a[key].toDate() : new Date(a[key]))
-        : a[key];
-      let bVal = key === "timestamp"
-        ? (b[key]?.toDate ? b[key].toDate() : new Date(b[key]))
-        : b[key];
+      let aVal, bVal;
+
+      if (key === "timestamp") {
+        aVal = a[key]?.toDate ? a[key].toDate() : new Date(a[key]);
+        bVal = b[key]?.toDate ? b[key].toDate() : new Date(b[key]);
+      } else if (key === "moves") {
+        aVal = Array.isArray(a.moves) ? a.moves.length : 0;
+        bVal = Array.isArray(b.moves) ? b.moves.length : 0;
+      } else {
+        aVal = a[key];
+        bVal = b[key];
+      }
+
       if (aVal == null) return 1;
       if (bVal == null) return -1;
-      if (typeof aVal === "number") return order === "asc" ? aVal - bVal : bVal - aVal;
+
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        return order === "asc" ? aVal - bVal : bVal - aVal;
+      }
       return order === "asc"
         ? String(aVal).localeCompare(String(bVal))
         : String(bVal).localeCompare(String(aVal));
@@ -162,8 +172,10 @@ function renderLeaderboard() {
     playerTd.classList.add("player-cell");
     playerTd.setAttribute("data-label", "Players");
     playerTd.innerHTML = `
-      <a href="/profile?pseudo=${encodeURIComponent(p1)}" class="${p1Class}">${p1}</a><br>
-      <a href="/profile?pseudo=${encodeURIComponent(p2)}" class="${p2Class}">${p2}</a>
+      <div class="player-names">
+        <a href="/profile?pseudo=${encodeURIComponent(p1)}" class="${p1Class}">${p1}</a>
+        <a href="/profile?pseudo=${encodeURIComponent(p2)}" class="${p2Class}">${p2}</a>
+      </div>
     `;
 
     const movesTd = document.createElement("td");
