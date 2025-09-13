@@ -1,0 +1,774 @@
+je veux maintenant faire la page pour joueur des parties en multijoueur il faut donc un écran de chargement pendant la recherche d'un adversaire avec la mention recherche d'un adversaire en cours, après donc il faut une interface avec le plateau de puissance 4 sur lequel on peut cliquer sur chaque colonne afin de placer notre jeton. Il faut donc attribuer le premier joueur aléatoirement entre nos deux joueurs je veux que celui qui commence ait toujours la couleur rouge, il va falloir afficher notre nom notre classement et notre image de profile sur le site en bas en dessous de la grille il faut afficher le notre et au dessus de la grille il faut afficher celui de notre adversaire. On ajoutera un timer pour les deux joueurs chaques joueur à le droit à 5 min de réflexion au total pour une partie. Il faut gérer aussi le fait que la connexion puisse être interrompu ou bien que l'utilisateur qui accidentellement la page, il doit donc pouvoir continuer à jouer la partie une fois reconnecté. Pour ce qui est de la gestion de la partie je veux utiliser un serveur render car c'est un service pratique et gratuit et je veux utiliser des WebSocket. Comme j'utilise la cersion gratuite le server doit démarer si il n'a pas été utilisé depuis longtemps donc il faut bien prendre en compte cela au moment de la recherche de partie avant de rechercher un adversaire, il faut que le server soit bien démaré. Pour le match making il faut si il y a plus de deux personnes connecté faire affronter celle qui ont le score elo le plus proche. Pour le calcul de cet elo il faut utiliser cette formule mais en prenant comme valeur de k une valeur qui va etre de 40 pour un joueur au départ mais qui va diminuer au fur et à mesure qu'il joue pour atteindre une valeur de 10, je veux que cette valeur de 10 soit atteinte au bout de 12 parties. Afin de changer plus vite d'elo au début et d'enseuite de se stabiliser à son vrai niveau. Il faut donc utiliser cette base de js que l'on a utilisé pour le replay des parties, il faut au maximum réutiliser les animations de pose des jetons, d'alignement à la fin de la partie un popup quand celle ci se termine, mais aussi le son du jeton qui tombe et bien sur il faut maintenanT que le tableau devienne clickable afin de pouvoir placer le jeton. Il faudrais aussi faire en sorte que le dernier jeton soit entouré d'un légé halo bleu de la même manière que l'alignement des trois jetons. Afin de savoir quel est le dernier jeton posé sur la grille. Voici donc le js de base : // js/replay.js
+import { db } from "./firebase-init.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const rows = 6, cols = 7;
+const grid = Array.from({ length: rows }, () => Array(cols).fill(0));
+let lastMove = null;
+let shouldAnimate = false;
+let winningCells = [];
+let endReached = false;
+
+const audioContext = new AudioContext();
+let buffers = [];
+let victoryBuffer = null;
+let secretVictoryBuffer = null;
+let defeatBuffer = null;
+let drawBuffer = null;
+
+async function loadSounds() {
+  const jetonFiles = ["sounds/jeton1.mp3", "sounds/jeton2.mp3"];
+  
+  // Charger les sons de jetons
+  buffers = await Promise.all(
+    jetonFiles.map(async (url) => {
+      const response = await fetch(url);
+      const arrayBuffer = await response.arrayBuffer();
+      return await audioContext.decodeAudioData(arrayBuffer);
+    })
+  );
+
+  // Charger le son de victoire
+  const victoryResponse = await fetch("sounds/victory.mp3");
+  const victoryArrayBuffer = await victoryResponse.arrayBuffer();
+  victoryBuffer = await audioContext.decodeAudioData(victoryArrayBuffer);
+
+  // Charger le son spécial (easter egg)
+  const secretResponse = await fetch("sounds/secret-victory.mp3");
+  const secretArrayBuffer = await secretResponse.arrayBuffer();
+  secretVictoryBuffer = await audioContext.decodeAudioData(secretArrayBuffer);
+  // Son de défaite
+  const defeatResponse = await fetch("sounds/defeat.mp3");
+  const defeatArrayBuffer = await defeatResponse.arrayBuffer();
+  defeatBuffer = await audioContext.decodeAudioData(defeatArrayBuffer);
+  // Son de draw
+  const drawResponse = await fetch("sounds/draw.mp3");
+  const drawArrayBuffer = await drawResponse.arrayBuffer();
+  drawBuffer = await audioContext.decodeAudioData(drawArrayBuffer);
+}
+
+function playRandomCoinSound() {
+  if (buffers.length === 0) return;
+
+  const buffer = buffers[Math.floor(Math.random() * buffers.length)];
+  const source = audioContext.createBufferSource();
+  source.buffer = buffer;
+
+  source.playbackRate.value = 0.9 + Math.random() * 0.2;
+
+  // Connexion au haut-parleur
+  source.connect(audioContext.destination);
+  source.start();
+}
+
+function playEndSound(winner) {
+  let bufferToPlay = null;
+
+  if (winner === "draw" && drawBuffer) {
+    bufferToPlay = drawBuffer;
+  } else if (winner && victoryBuffer) {
+    // 1 chance sur 100 : son spécial
+    if (secretVictoryBuffer && Math.random() < 0.01) {
+      bufferToPlay = secretVictoryBuffer;
+      console.log("🎉 Easter egg !");
+    } else {
+      bufferToPlay = victoryBuffer;
+    }
+  } else {
+    bufferToPlay = defeatBuffer;
+  }
+
+  if (bufferToPlay) {
+    const source = audioContext.createBufferSource();
+    source.buffer = bufferToPlay;
+    source.playbackRate.value = 1;
+    source.connect(audioContext.destination);
+    source.start();
+  }
+}
+
+
+function isGridFull() {
+  return grid.every(row => row.every(cell => cell !== 0));
+}
+
+function isDraw() {
+  return isGridFull() && winningCells.length === 0;
+}
+
+async function main() {
+  const gridDiv = document.getElementById("grid");
+  const playPauseImg = document.getElementById("playpause-img");
+  document.body.addEventListener("click", () => {
+  if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+  }, { once: true });
+  await loadSounds();
+
+  function renderGrid() {
+    gridDiv.innerHTML = "";
+    for (let r = 0; r < rows; r++) {
+      const rowDiv = document.createElement("div");
+      rowDiv.classList.add("row");
+
+      for (let c = 0; c < cols; c++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+
+        // Ajout des couleurs de joueur
+        if (grid[r][c] === 1) cell.classList.add("red");
+        if (grid[r][c] === 2) cell.classList.add("yellow");
+
+        // Vérifie si la cellule fait partie des gagnantes
+        const isWinningCell = winningCells.some(
+          ([wr, wc]) => wr === r && wc === c
+        );
+
+        if (isWinningCell) {
+          cell.classList.add("winning-cell");
+        }
+
+        // Ajoute l'animation de chute si c'est le dernier coup et pas une cellule gagnante
+        if (
+          lastMove &&
+          lastMove[0] === r &&
+          lastMove[1] === c &&
+          !isWinningCell
+        ) {
+          cell.classList.add("last-move");
+        }
+
+        rowDiv.appendChild(cell);
+      }
+
+      gridDiv.appendChild(rowDiv);
+    }
+  }
+
+
+  function disableControls() {
+    document.getElementById("previous").disabled = true;
+    document.getElementById("next").disabled = true;
+    document.getElementById("playpause").disabled = true;
+    document.getElementById("rewind").disabled = true;
+    document.getElementById("end").disabled = true;
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const gameId = urlParams.get("game_id");
+
+  function showGridMessage(text) {
+  const gridMessage = document.getElementById("grid-message");
+  gridMessage.textContent = text;
+  gridMessage.classList.remove("hidden");
+  }
+
+  function hideGridMessage() {
+    const gridMessage = document.getElementById("grid-message");
+    gridMessage.classList.add("hidden");
+  }
+
+  if (!gameId) {
+    showGridMessage("No game specified.");
+    renderGrid();
+    disableControls();
+    throw new Error("game_id missing in URL");
+  }
+
+  try {
+    const gameDoc = await getDoc(doc(db, "games", gameId));
+    if (!gameDoc.exists()) {
+      showGridMessage("Game not found.");
+      throw new Error("Files not found in Firestore");
+    }
+
+    hideGridMessage();
+
+    const data = gameDoc.data();
+    const player1 = data.player1;
+    const player2 = data.player2;
+    const winnerPseudo = data.result;
+    const firstPlayerColor = data.first_player_color || "red";
+    const firstPlayer = (firstPlayerColor === "red") ? 1 : 2;
+    const redPlayer = (firstPlayerColor === "red") ? player1 : player2;
+    const yellowPlayer = (firstPlayerColor === "yellow") ? player1 : player2;
+
+    // Afficher les pseudos dans les éléments HTML
+    document.getElementById("red-player-name").textContent = redPlayer;
+    document.getElementById("yellow-player-name").textContent = yellowPlayer;
+    
+    const moves = data.moves || [];
+    let currentMove = 0;
+    let isPlaying = false;
+    let playInterval = null;
+
+    function applyMove(colIndex, player) {
+      for (let r = rows - 1; r >= 0; r--) {
+        if (grid[r][colIndex] === 0) {
+          grid[r][colIndex] = player;
+          if (shouldAnimate) {
+            lastMove = [r, colIndex]; // Pour animation si demandé
+          } else {
+            lastMove = null; // Pas d’animation si on recule
+          }
+          break;
+        }
+      }
+    }
+
+    function resetGrid() {
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          grid[r][c] = 0;
+        }
+      }
+      winningCells = [];
+      endReached = false;
+      lastMove = null;
+    }
+
+    function highlightWinningCells() {
+      if (endReached) return;
+
+      const directions = [
+        { dr: 0, dc: 1 },   // Horizontal
+        { dr: 1, dc: 0 },   // Vertical
+        { dr: 1, dc: 1 },   // Diagonale /
+        { dr: 1, dc: -1 }   // Diagonale \
+      ];
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const player = grid[r][c];
+          if (player === 0) continue;
+
+          for (const { dr, dc } of directions) {
+            const cells = [];
+            for (let i = 0; i < 4; i++) {
+              const nr = r + dr * i;
+              const nc = c + dc * i;
+              if (
+                nr >= 0 && nr < rows &&
+                nc >= 0 && nc < cols &&
+                grid[nr][nc] === player
+              ) {
+                cells.push([nr, nc]);
+              } else {
+                break;
+              }
+            }
+
+            if (cells.length === 4) {
+              winningCells = cells;
+              endReached = true; // On marque la fin
+              setTimeout(renderGrid, 200);
+              return;
+            }
+          }
+        }
+      }
+    }
+
+    function getWinnerText() {
+      const winner = data.result;
+
+      if (winner === "draw") return "Draw!";
+      if (winner === data.player1) return `${data.player1} wins!`;
+      if (winner === data.player2) return `${data.player2} wins!`;
+
+      return "Unknown result";
+    }
+
+    function showPopup(message, isDraw = false) {
+      const popup = document.getElementById("popup");
+      const popupMessage = document.getElementById("popup-message");
+
+      setTimeout(() => {
+        playEndSound(winnerPseudo);
+      }, 200);
+
+      setTimeout(() => {
+        popup.classList.remove("hidden");
+        popupMessage.textContent = message;
+      }, 1800); // ← délai en ms
+    }
+
+    function updateButtons() {
+      document.getElementById("previous").disabled = (currentMove === 0);
+      document.getElementById("next").disabled = (currentMove === moves.length);
+      document.getElementById("playpause").disabled = (currentMove === moves.length);
+      document.getElementById("rewind").disabled = (currentMove === 0);
+      document.getElementById("end").disabled = (currentMove === moves.length);
+    }
+
+    function togglePlayPause() {
+      if (isPlaying) {
+        clearInterval(playInterval);
+        isPlaying = false;
+        playPauseImg.src = "images/svg/play.svg";
+        playPauseImg.alt = "Play";
+      } else {
+        isPlaying = true;
+        playPauseImg.src = "images/svg/pause.svg";
+        playPauseImg.alt = "Pause";
+
+        playInterval = setInterval(() => {
+          if (currentMove < moves.length) {
+            const col = moves[currentMove] - 1;
+            const player = (currentMove % 2 === 0) ? firstPlayer : (firstPlayer === 1 ? 2 : 1);
+            shouldAnimate = true;
+            applyMove(col, player);
+            currentMove++;
+            playRandomCoinSound();
+            renderGrid();
+            updateButtons();
+
+            if (currentMove === moves.length) {
+              clearInterval(playInterval);
+              isPlaying = false;
+              playPauseImg.src = "images/svg/play.svg";
+              playPauseImg.alt = "Play";
+              highlightWinningCells();
+              if (winningCells.length > 0) {
+                showPopup(getWinnerText());
+              }
+            }
+          }
+        }, 700);
+      }
+    }
+
+    renderGrid();
+    updateButtons();
+
+    document.getElementById("playpause").addEventListener("click", togglePlayPause);
+
+    document.getElementById("previous").addEventListener("click", () => {
+      if (currentMove > 0) {
+        clearInterval(playInterval);
+        isPlaying = false;
+        playPauseImg.src = "images/svg/play.svg";
+        playPauseImg.alt = "Play";
+        currentMove--;
+
+        resetGrid();
+
+        for (let i = 0; i < currentMove; i++) {
+          const col = moves[i] - 1;
+          const player = (i % 2 === 0) ? firstPlayer : (firstPlayer === 1 ? 2 : 1);
+          shouldAnimate = false;
+          applyMove(col, player);
+        }
+        renderGrid();
+        updateButtons();
+      }
+    });
+
+    document.getElementById("next").addEventListener("click", () => {
+      if (currentMove < moves.length) {
+        clearInterval(playInterval);
+        isPlaying = false;
+        playPauseImg.src = "images/svg/play.svg";
+        playPauseImg.alt = "Play";
+        const col = moves[currentMove] - 1;
+        const player = (currentMove % 2 === 0) ? firstPlayer : (firstPlayer === 1 ? 2 : 1);
+        shouldAnimate = true;
+        applyMove(col, player);
+        currentMove++;
+        playRandomCoinSound();
+        renderGrid();
+        updateButtons();
+
+        if (currentMove === moves.length) {
+          clearInterval(playInterval);
+          isPlaying = false;
+          playPauseImg.src = "images/svg/play.svg";
+          playPauseImg.alt = "Play";
+          highlightWinningCells();
+          if (winningCells.length > 0) {
+            showPopup(getWinnerText());
+          }
+        }
+      }
+    });
+
+    document.getElementById("rewind").addEventListener("click", () => {
+      clearInterval(playInterval);
+      isPlaying = false;
+      playPauseImg.src = "images/svg/play.svg";
+      playPauseImg.alt = "Play";
+      currentMove = 0;
+      resetGrid();
+      renderGrid();
+      updateButtons();
+    });
+
+    document.getElementById("end").addEventListener("click", () => {
+      resetGrid();
+      for (let i = 0; i < moves.length; i++) {
+        const col = moves[i] - 1;
+        const player = (i % 2 === 0) ? firstPlayer : (firstPlayer === 1 ? 2 : 1);
+        shouldAnimate = true;
+        applyMove(col, player);
+      }
+      currentMove = moves.length;
+      clearInterval(playInterval);
+      isPlaying = false;
+      playPauseImg.src = "images/svg/play.svg";
+      playPauseImg.alt = "Play";
+      playRandomCoinSound();
+      renderGrid();
+      updateButtons();
+      highlightWinningCells();
+      if (winningCells.length > 0) {
+        showPopup(getWinnerText());
+      }      
+    });
+
+    document.getElementById("popup-close").addEventListener("click", () => {
+    document.getElementById("popup").classList.add("hidden");
+    });
+
+  } catch (error) {
+    console.error("Erreur Firestore :", error);
+    gridDiv.innerText = "Erreur lors du chargement de la partie.";
+  }
+}
+
+main();
+
+
+Donc maintenant il fauT aussi adpater donc le système d'elo et aussi qu'al la fin de la partie on écrive les données correespondante sur la firebase db : il faut juste donc réécrire la logique python en js que voici : import firebase_admin
+from firebase_admin import credentials, firestore
+import datetime
+import os
+from connect4_robot_j4 import GameData
+import secrets, string
+
+def initialize_firebase():
+    """
+    Initializes the Firebase Admin SDK and connects to Firestore.
+    Returns a Firestore client if successful, otherwise None.
+    """
+    try:
+        if "FIREBASE_CRED" not in os.environ:
+            print("[Firebase] Environment variable FIREBASE_CRED is not set.")
+            return None
+
+        key_path = os.environ.get("FIREBASE_CRED")
+        cred = credentials.Certificate(str(key_path))
+        
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred)
+
+        db = firestore.client()
+        print("[Firebase] Successfully connected to Firestore.")
+        return db
+
+    except Exception as e:
+        print(f"[Firebase] Initialization failed: {e}")
+        return None
+
+
+def get_user_doc_by_pseudo(db, pseudo):
+    pseudo_lower = pseudo.lower()
+    users_ref = db.collection("users")
+    query = users_ref.where("pseudo_lower", "==", pseudo_lower).limit(1)
+    docs = query.get()
+
+    if docs:
+        return docs[0].id, docs[0]
+    else:
+        return None, None
+
+def expected_score(player_elo, opponent_elo):
+    return 1 / (1 + 10 ** ((opponent_elo - player_elo) / 400))
+
+def k_factor(ai_level):
+    """
+    K varie entre 10 (niveau IA 1) et 40 (niveau IA 7) par exemple.
+    Non linéaire : on prend racine carrée multipliée par une constante
+    """
+    base_k_min = 10
+    base_k_max = 40
+    # Racine carrée pour la non-linéarité
+    k = base_k_min + (base_k_max - base_k_min) * ((ai_level / 7) ** 0.5)
+    return k
+
+def update_elo(player_elo, ai_elo, ai_level, player_result):
+    """
+    player_result: 1 = victoire joueur, 0 = défaite joueur
+    """
+    K = k_factor(ai_level)
+    E_player = expected_score(player_elo, ai_elo)
+    new_player_elo = player_elo + K * (player_result - E_player)
+    new_player_elo = max(new_player_elo, 100)  # Elo plancher
+
+    # Mise à jour Elo IA aussi (inverse)
+    E_ai = expected_score(ai_elo, player_elo)
+    ai_result = 1 - player_result
+    new_ai_elo = ai_elo + K * (ai_result - E_ai)
+    new_ai_elo = max(new_ai_elo, 100)
+
+    return round(new_player_elo), round(new_ai_elo)
+
+def generate_claim_token():
+    return ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))
+
+def get_game_data(game_data: GameData):
+    """
+    Extracts game data from the GameData object.
+    """
+    return {
+        "game_id": game_data.game_id,
+        "timestamp": datetime.datetime.now(datetime.timezone.utc),
+        "duration_seconds": (game_data.game_end_time - game_data.game_start_time).total_seconds(),
+        "first_player_color": game_data.first_player_color,
+        "moves": game_data.moves,
+        "result": game_data.result,
+        "player1": game_data.player1,
+        "player2": game_data.player2,
+        "player_pseudo": game_data.player_pseudo,
+    }
+
+def get_players_data(game_data, db, ai_depth):
+    """
+    Fetches user and AI data from Firestore based on game data.
+    Uses pseudo-based document lookup for the human player (not UID).
+    """
+    timestamp = datetime.datetime.now(datetime.timezone.utc)
+    player_pseudo = game_data["player_pseudo"]
+    ai_pseudo = f"AI ({ai_depth})"
+    ai_uid = "AI"  # fixed document ID for the AI
+
+    # Get player UID and document using their pseudo
+    player_uid, player_doc_snapshot = get_user_doc_by_pseudo(db, player_pseudo)
+    if player_uid is None:
+        raise ValueError(f"Player with pseudo '{player_pseudo}' not found in Firestore.")
+
+    player_ref = db.collection("users").document(player_uid)
+    ai_ref = db.collection("users").document(ai_uid)
+
+    # Get latest document snapshots
+    player_doc = player_doc_snapshot
+    ai_doc = ai_ref.get()
+
+    # Retrieve Elo ratings
+    player_elo = player_doc.to_dict().get("elo", 500) if player_doc.exists else 500
+    ai_elo = ai_doc.to_dict().get("elo", 500) if ai_doc.exists else 500
+
+    # Determine match outcome
+    result = game_data["result"]  # should match player_pseudo, AI (X), or None
+    if result == player_pseudo:
+        player_result = 1
+    elif result == ai_uid:
+        player_result = 0
+    else:
+        player_result = 0.5  # draw
+
+    # Update Elo ratings
+    new_player_elo, new_ai_elo = update_elo(player_elo, ai_elo, ai_depth, player_result)
+
+    return {
+        "timestamp": timestamp,
+        "player": {
+            "pseudo": player_pseudo,
+            "ref": player_ref,
+            "doc": player_doc,
+            "elo_before": player_elo,
+            "elo_after": new_player_elo,
+            "elo_entry": {
+                "game_id": game_data["game_id"],
+                "timestamp": timestamp,
+                "elo": new_player_elo
+            }
+        },
+        "ai": {
+            "pseudo": ai_pseudo,
+            "ref": ai_ref,
+            "doc": ai_doc,
+            "elo_before": ai_elo,
+            "elo_after": new_ai_elo,
+            "elo_entry": {
+                "game_id": game_data["game_id"],
+                "timestamp": timestamp,
+                "elo": new_ai_elo
+            }
+        }
+    }
+
+
+def send_game_data(game_state: GameData, db):
+    """
+    Sends a completed Connect Four game to Firestore and updates player stats.
+    Supports both PvP (player vs player) and PvAI (player vs AI) modes.
+    """
+    if db is None:
+        print("[Firebase] No database connection. Game data not sent.")
+        return
+
+    try:
+        # Extract game data from game state
+        game_data = get_game_data(game_state)
+        game_id = game_data["game_id"]
+
+        # Fetch all player-related Firestore documents and data
+        data = get_players_data(game_data, db, game_state.ai_depth)
+        timestamp = data["timestamp"]
+
+        # Determine result of the game
+        result = game_data["result"]  # "draw" or player1_pseudo / player2_pseudo
+        player1 = data["player"]
+        player2 = data["ai"]
+
+        if result == player1["pseudo"]:
+            player_result = 1
+        elif result == player2["pseudo"]:
+            player_result = 0
+        else:
+            player_result = 0.5
+
+        # Prepare stats updates
+        if player_result == 1:
+            p1_update = {"wins": firestore.Increment(1)}
+            p2_update = {"losses": firestore.Increment(1)}
+        elif player_result == 0:
+            p1_update = {"losses": firestore.Increment(1)}
+            p2_update = {"wins": firestore.Increment(1)}
+        else:
+            p1_update = {"draws": firestore.Increment(1)}
+            p2_update = {"draws": firestore.Increment(1)}
+
+        # ✅ Write the game document
+        game_data["timestamp"] = timestamp  # Use unified timestamp
+        db.collection("games").document(game_id).set(game_data)
+        print(f"[Firebase] Game {game_id} successfully sent to Firestore.")
+
+        # ✅ Update Player 1 (the human user who initiated the game)
+        if player1["doc"].exists:
+            player1["ref"].update({
+                "elo": player1["elo_after"],
+                "elo_history": firestore.ArrayUnion([player1["elo_entry"]]),
+                **p1_update
+            })
+        else:
+            start_entry = {
+                "game_id": "initial",
+                "timestamp": timestamp - datetime.timedelta(seconds=1),
+                "elo": 500
+            }
+            player1["ref"].set({
+                "pseudo": player1["pseudo"],
+                "pseudo_lower": player1["pseudo"].lower(),
+                "elo": player1["elo_after"],
+                "elo_history": [start_entry, player1["elo_entry"]],
+                "wins": 1 if player_result == 1 else 0,
+                "losses": 1 if player_result == 0 else 0,
+                "draws": 1 if player_result == 0.5 else 0,
+                "claimed": False,
+                "claim_token": generate_claim_token()
+            })
+            print(f"[Token] Claim token for new user '{player1['pseudo']}': {claim_token}")
+
+        # Update Player 2 (either another human or the AI)
+        if player2["doc"].exists:
+            player2["ref"].update({
+                "elo": player2["elo_after"],
+                "elo_history": firestore.ArrayUnion([player2["elo_entry"]]),
+                **p2_update
+            })
+        else:
+            start_entry2 = {
+                "game_id": "initial",
+                "timestamp": timestamp - datetime.timedelta(seconds=1),
+                "elo": 500
+            }
+
+            opponent_doc = {
+                "pseudo": player2["pseudo"],
+                "elo": player2["elo_after"],
+                "elo_history": [start_entry2, player2["elo_entry"]],
+                "wins": 1 if player_result == 0 else 0,
+                "losses": 1 if player_result == 1 else 0,
+                "draws": 1 if player_result == 0.5 else 0
+            }
+
+            if not game_state.opponent_is_ai:
+                claim_token = generate_claim_token()
+                opponent_doc.update({
+                    "pseudo_lower": player2["pseudo"].lower(),
+                    "claimed": False,
+                    "claim_token": claim_token
+                })
+
+                # Show the token in the console
+                print(f"[Token] Claim token for new user '{player2['pseudo']}': {claim_token}")
+
+            player2["ref"].set(opponent_doc)
+
+        # Elo logs
+        print(f"[Elo] {player1['pseudo']}: {player1['elo_before']} → {player1['elo_after']}")
+        print(f"[Elo] {player2['pseudo']}: {player2['elo_before']} → {player2['elo_after']}")
+
+    except Exception as e:
+        print(f"[Firebase] Failed to send game data: {e}")
+
+
+Et enfin donc voici le loader de chargement que je veux implémenter : 
+
+<span class="loader"></span>
+
+
+.loader {
+          position: relative;
+          width: 120px;
+          height: 90px;
+          margin: 0 auto;
+        }
+        .loader:before {
+          content: "";
+          position: absolute;
+          bottom: 30px;
+          left: 50px;
+          height: 30px;
+          width: 30px;
+          border-radius: 50%;
+          background: #004080;
+          animation: loading-bounce 0.5s ease-in-out infinite alternate;
+        }
+        .loader:after {
+          content: "";
+          position: absolute;
+          right: 0;
+          top: 0;
+          height: 7px;
+          width: 45px;
+          border-radius: 4px;
+          box-shadow: 0 5px 0 #fff, -35px 50px 0 #fff, -70px 95px 0 #fff;
+          animation: loading-step 1s ease-in-out infinite;
+        }
+
+        @keyframes loading-bounce {
+          0% { transform: scale(1, 0.7)}
+          40% { transform: scale(0.8, 1.2)}
+          60% { transform: scale(1, 1)}
+          100% { bottom: 140px }
+        }
+        @keyframes loading-step {
+          0% {
+            box-shadow: 0 10px 0 rgba(0,0,0,0),
+                        0 10px 0 #fff,
+                      -35px 50px 0 #fff,
+                      -70px 90px 0 #fff;
+          }
+          100% {
+            box-shadow: 0 10px 0 #fff,
+                      -35px 50px 0 #fff,
+                      -70px 90px 0 #fff,
+                      -70px 90px 0 rgba(0,0,0,0);
+          }
+        }
+
+
+N'oublis pas que je veux implémenter tout ça avec un serveur distant avec des WebSocket géré par render et qu'il faut qu'une personne déconnecté puissent se reconnecter sans problème sur la même partie et qu'on ne puisse pas lancer de partie contre nous même mais avec la vérification du uid firebase du compte cela ne devrait pas poser de problème
